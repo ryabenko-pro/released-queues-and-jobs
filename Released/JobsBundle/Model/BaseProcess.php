@@ -47,6 +47,12 @@ abstract class BaseProcess
         return $this;
     }
 
+    /**
+     * TODO: move this method to another class
+     * @param ProcessExecutorInterface $executor
+     * @param ContainerInterface $container
+     * @throws \Exception
+     */
     public function execute(ProcessExecutorInterface $executor, ContainerInterface $container)
     {
         $counter = 0;

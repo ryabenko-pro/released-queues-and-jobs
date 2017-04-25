@@ -59,6 +59,8 @@ class JobPersistenceService
      */
     public function addJob(BaseJob $job)
     {
+        $job->validate();
+
         $type = $this->getType($job->getType());
 
         $entity = new Job();

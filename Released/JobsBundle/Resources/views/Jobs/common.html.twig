@@ -1,6 +1,6 @@
 {% extends base_template %}
 
-{% block page_content %}
+{% block body %}
     {% if processes %}
     <div class="alert alert-success">
         Running tasks: {% for process in processes %}{% if not loop.first %}, {% endif %}<strong>{{ process }}</strong>{% endfor %}
@@ -12,4 +12,4 @@
     {% endif %}
 
     {% block inner_page_content %}{% endblock %}
-{% endblock page_content %}
+{% endblock body %}
