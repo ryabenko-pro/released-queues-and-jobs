@@ -1,0 +1,99 @@
+{% extends 'ReleasedJobsBundle:Jobs:show.html.twig' %}
+
+{% block job_details %}
+
+    Types filter:
+    {% for type in event_types %}
+        {% if type_filter == type.type %}
+            <a class="btn btn-small btn-primary" href="{{ path('jobs_show_events', {id: job.id}|merge(package_id ? {package_id: package_id} : {})) }}">
+                {{ type.type }} ({{ type.count }}) <span class="badge"><i class="glyphicon glyphicon-remove"></i></span>
+            </a>
+        {% else %}
+            <a class="btn btn-default" href="{{ path('jobs_show_events', {id: job.id, type: type.type}|merge(package_id ? {package_id: package_id} : {})) }}">{{ type.type }} ({{ type.count }}) </a>
+        {% endif %}
+    {% endfor %}
+
+    <hr>
+
+
+    <table class="table table-striped table-hover">
+        <thead>
+        <tr>
+            <td colspan="4">Server time: <strong>{{ "now"|date }}</strong></td>
+            <td colspan="1" class="pagerfanta">
+                {{ pagerfanta(events) }}
+            </td>
+        </tr>
+        <tr>
+            <th>ID</th>
+            <th>Created</th>
+            <th>Type</th>
+            <th>Package</th>
+            <th>Message</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for event in events %}
+            <tr>
+                <td>{{ event.id }}</td>
+                <td nowrap>{{ event.createdAt|date }}</td>
+                <td class="event-type event-type-{{ event.type }}">{{ event.type }}</td>
+                <td nowrap>
+                    {%  if event.jobPackage %}
+                        {% set package_block_id = 'package-details-' ~ event.id %}
+                        <a href="#" onclick="$('#{{ package_block_id }}').slideToggle(); return false;">Show/hide package</a>
+                        <div style="display: none;" id="{{ package_block_id }}">
+                            {% if event.jobPackageNumber and event.jobPackage.packages[event.jobPackageNumber - 1] is defined%}
+                                <pre>{{ event.jobPackage.packages[event.jobPackageNumber - 1]|yaml_encode(1) }}</pre>
+                            {% else %}
+                                <pre>{{ event.jobPackage.packages|yaml_encode(1) }}</pre>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <i style="color: #AAAAAA;">No package</i>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if event.message|length > 0 %}
+                    <pre>{{ event.message }}</pre>
+                    {% endif %}
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="5">No events</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+        <tfoot>
+        <tr>
+            <td colspan="4">Server time: <strong>{{ "now"|date }}</strong></td>
+            <td colspan="1" class="pagerfanta">
+                {{ pagerfanta(events) }}
+            </td>
+        </tr>
+        </tfoot>
+    </table>
+
+{% endblock %}
+
+{% block styles %}
+    {{ parent() }}
+
+    <style>
+        .event-type {
+            font-weight: bold;
+        }
+
+        .event-type-error {
+            color: red;
+        }
+
+        .event-type-plan {
+            color: green;
+        }
+
+    </style>
+{% endblock %}
+
+{% block events_active %}class="active"{% endblock %}

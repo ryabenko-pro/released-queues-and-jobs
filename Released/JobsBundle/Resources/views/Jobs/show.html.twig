@@ -1,0 +1,140 @@
+{% extends '@ReleasedJobs/Jobs/common.html.twig' %}
+
+{% block page_title %}Jobs details{% endblock %}
+
+{% block inner_page_content %}
+    <h1>Job of type '{{ job.jobType.name }}'</h1>
+
+    <div class="col-lg-4">
+        <table class="table">
+            <tbody>
+                <tr>
+                    <td>Status:</td>
+                    <td>{{ job.status }}</td>
+                </tr>
+                <tr>
+                    <td>Needs planning:</td>
+                    <td>{% if job.isNeedPlanning %}✔{% else %}✘{% endif %}</td>
+                </tr>
+                {% if job.status != 'done' %}
+                    <tr>
+                        <td>Next planning</td>
+                        <td>{{ job.nextPlanningAt|date }}</td>
+                    </tr>
+                {% endif %}
+
+                <tr>
+                    <td>Job added:</td>
+                    <td>{{ job.createdAt|date }}</td>
+                </tr>
+                <tr>
+                    <td>Packages:</td>
+                    <td>
+                        {{ job.packagesFinished }} / {{ job.packagesTotal }}
+                        {% if job.packagesFinished > job.packagesTotal %}
+                        <span style="font-weight: bold; color: red;">!</span>
+                        {% endif %}
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>Errors:</td>
+                    <td>
+                        {% set errors_count = job.events('error')|length %}
+                        {% if errors_count > 0 %}
+                        <a href="{{ path('jobs_show_events', {id: job.id, type: 'error'}) }}">{{ errors_count }}</a>
+                        {% else %}
+                        0
+                        {% endif %}
+                    </td>
+                </tr>
+
+                {% if job.nextPlanningAt %}
+                <tr>
+                    <td>Next planning</td>
+                    <td>{{ job.nextPlanningAt|date }}</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="col-lg-8">
+        <pre>{{ job.data|yaml_encode(2) }}</pre>
+    </div>
+
+    <hr />
+
+    <div class="col-lg-12">
+        <ul class="nav nav-tabs">
+            <li role="presentation"{% block packages_active %}{% endblock %}>
+                <a href="{{ path('jobs_show', {id: job.id}) }}">Packages</a>
+            </li>
+            <li role="presentation"{% block events_active %}{% endblock %}>
+                <a href="{{ path('jobs_show_events', {id: job.id}) }}">Events</a>
+            </li>
+        </ul>
+        <br>
+
+        {% block job_details %}{% endblock %}
+    </div>
+
+{% endblock %}
+
+
+{% block page_styles %}
+    <style>
+        .pagerfanta {
+        }
+
+        .pagerfanta a,
+        .pagerfanta span {
+            display: inline-block;
+            border: 1px solid blue;
+            color: blue;
+            margin-right: .2em;
+            padding: .25em .35em;
+        }
+
+        .pagerfanta a {
+            text-decoration: none;
+        }
+
+        .pagerfanta a:hover {
+            background: #ccf;
+        }
+
+        .pagerfanta .dots {
+            border-width: 0;
+        }
+
+        .pagerfanta .current {
+            background: #ccf;
+            font-weight: bold;
+        }
+
+        .pagerfanta .disabled {
+            border-color: #ccf;
+            color: #ccf;
+        }
+
+        .pagerfanta a,
+        .pagerfanta span {
+            border-color: blue;
+            color: blue;
+        }
+
+        .pagerfanta a:hover {
+            background: #ccf;
+        }
+
+        .pagerfanta .current {
+            background: #ccf;
+        }
+
+        .pagerfanta .disabled {
+            border-color: #ccf;
+            color: #cfcfcf;
+        }
+    </style>
+{% endblock page_styles %}

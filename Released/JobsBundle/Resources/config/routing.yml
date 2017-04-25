@@ -1,0 +1,4 @@
+jobs_dashboard:
+    type: annotation
+    resource: '@ReleasedJobsBundle/Controller/'
+

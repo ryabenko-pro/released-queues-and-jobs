@@ -1,0 +1,132 @@
+{% extends '@ReleasedJobs/Jobs/common.html.twig' %}
+
+{% block page_title %}Jobs list{% endblock %}
+
+{% block inner_page_content %}
+    <h1>Jobs list</h1>
+
+    Types filter:
+    {% for type in types %}
+        {% if type_filter == type.slug %}
+            <a class="btn btn-primary" href="{{ path('jobs_index') }}">
+                {{ type.name }} <span class="badge"><i class="glyphicon glyphicon-remove-sign"></i></span>
+            </a>
+        {% else %}
+            <a class="btn btn-default" href="{{ path('jobs_index', {type: type.slug}) }}">{{ type.name }}</a>
+        {% endif %}
+    {% endfor %}
+
+    <hr>
+
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <td colspan="4">Server time: <strong>{{ "now"|date }}</strong></td>
+                <td colspan="1" class="pagerfanta">
+                    <div class="pull-right">
+                        {{ pagerfanta(jobs) }}
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <th>ID</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Packages</th>
+                <th>Content</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for job in jobs %}
+            {% set job_href = path('jobs_show', {id: job.id}) %}
+            <tr class="job-{{ job.status }}">
+                <td><a href="{{ job_href }}">{{ job.id }}</a></td>
+                <td>
+                    <a href="{{ job_href }}">{{ job.jobType.name }}</a><br>
+                    <small>{{  job.createdAt|date }}</small>
+                </td>
+                <td>{{ job.status }}</td>
+                <td>{{ job.packagesFinished }} / {{ job.packagesTotal }}</td>
+                <td>
+                    <a href="{{ job_href }}">
+                        <pre>{{ job.data|yaml_encode(2) }}</pre>
+                    </a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="5">No jobs</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="4">Server time: <strong>{{ "now"|date }}</strong></td>
+                <td colspan="1" class="pagerfanta">
+                    <div class="pull-right">
+                        {{ pagerfanta(jobs) }}
+                    </div>
+                </td>
+            </tr>
+        </tfoot>
+    </table>
+
+{% endblock %}
+
+
+{% block page_styles %}
+    <style>
+        .pagerfanta {
+        }
+
+        .pagerfanta a,
+        .pagerfanta span {
+            display: inline-block;
+            border: 1px solid blue;
+            color: blue;
+            margin-right: .2em;
+            padding: .25em .35em;
+        }
+
+        .pagerfanta a {
+            text-decoration: none;
+        }
+
+        .pagerfanta a:hover {
+            background: #ccf;
+        }
+
+        .pagerfanta .dots {
+            border-width: 0;
+        }
+
+        .pagerfanta .current {
+            background: #ccf;
+            font-weight: bold;
+        }
+
+        .pagerfanta .disabled {
+            border-color: #ccf;
+            color: #ccf;
+        }
+
+        .pagerfanta a,
+        .pagerfanta span {
+            border-color: blue;
+            color: blue;
+        }
+
+        .pagerfanta a:hover {
+            background: #ccf;
+        }
+
+        .pagerfanta .current {
+            background: #ccf;
+        }
+
+        .pagerfanta .disabled {
+            border-color: #ccf;
+            color: #cfcfcf;
+        }
+    </style>
+{% endblock page_styles %}

@@ -1,0 +1,50 @@
+{% extends 'ReleasedJobsBundle:Jobs:show.html.twig' %}
+
+{% block job_details %}
+    <table class="table">
+        <thead>
+            <tr>
+                <td colspan="4">Server time: <strong>{{ "now"|date }}</strong></td>
+                <td colspan="1" class="pagerfanta">
+                    {{ pagerfanta(packages) }}
+                </td>
+            </tr>
+            <tr>
+                <th>ID</th>
+                <th>Created</th>
+                <th>Status</th>
+                <th>Cur.</th>
+                <th>Packages</th>
+                <th>Events</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for package in packages %}
+            <tr>
+                <td>{{ package.id }}</td>
+                <td>{{ package.createdAt|date }}</td>
+                <td>{{ package.status }}</td>
+                <td>{{ package.currentPackage }}</td>
+                <td><pre>{{ package.packages|yaml_encode(1) }}</pre></td>
+                <td>
+                    <a href="{{ path('jobs_show_events', {id: job.id, package_id: package.id}) }}">Show</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="6">No packages</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="4">Server time: <strong>{{ "now"|date }}</strong></td>
+                <td colspan="1" class="pagerfanta">
+                    {{ pagerfanta(packages) }}
+                </td>
+            </tr>
+        </tfoot>
+    </table>
+{% endblock %}
+
+{% block packages_active %}class="active"{% endblock %}

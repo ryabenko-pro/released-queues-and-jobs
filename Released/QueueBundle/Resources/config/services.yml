@@ -1,0 +1,28 @@
+parameters:
+  cmd_grep: /bin/grep
+  cmd_ps: /bin/ps
+  cmd_awk: /usr/bin/awk
+
+services:
+
+  released.queue_repository_factory:
+    public: false
+    class: Released\Common\Factory\RepositoryFactory
+    arguments:
+      - "@=service(parameter('released.queue.entity_manager'))"
+
+  released.queue.repository.queued_task:
+    class: Released\QueueBundle\Repository\QueuedTaskRepository
+    factory: ['@released.queue_repository_factory', getRepository]
+    arguments:
+      - Released\QueueBundle\Entity\QueuedTask
+
+  released.queue.task_queue.service_database:
+    class: Released\QueueBundle\Service\TaskQueueService
+    arguments:
+      - "@service_container"
+      - "@released.queue.repository.queued_task"
+      - "%released.queue.task_types%"
+
+  released.queue.task_queue.service:
+    alias: released.queue.task_queue.service_database

@@ -1,0 +1,15 @@
+{% extends base_template %}
+
+{% block page_content %}
+    {% if processes %}
+    <div class="alert alert-success">
+        Running tasks: {% for process in processes %}{% if not loop.first %}, {% endif %}<strong>{{ process }}</strong>{% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-warning">
+        No running jobs found. <i class="glyphicon glyphicon-question-sign" title="Full path to `app/console` must be used and `jobs` must be present to display commands here."></i>
+    </div>
+    {% endif %}
+
+    {% block inner_page_content %}{% endblock %}
+{% endblock page_content %}
