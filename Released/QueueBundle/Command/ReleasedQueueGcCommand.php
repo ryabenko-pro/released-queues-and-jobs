@@ -18,7 +18,7 @@ class ReleasedQueueGcCommand extends BaseSingleCommand
 
     protected function configure()
     {
-        $this->setName("mobillogix:queue:gc");
+        $this->setName("released:queue:gc");
         $this->setDescription("Garbage collector for tasks. Rules are:\n".
             " - 'selected' for some time.\n".
             " - started and not finished for some time.\n".

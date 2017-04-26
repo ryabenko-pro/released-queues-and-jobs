@@ -15,7 +15,7 @@ class ReleasedJobsExecuteCommand extends BaseSingleCommand
 
     protected function configure()
     {
-        $this->setName("mobillogix:jobs:execute")
+        $this->setName("released:jobs:execute")
             ->setDescription("Run packages. Can be run in parallel.");
     }
 
@@ -37,7 +37,7 @@ class ReleasedJobsExecuteCommand extends BaseSingleCommand
         $processes = $this->service->getProcessesForRun();
 
         foreach ($processes as $process) {
-            $this->runAsProcess('mobillogix:jobs:package-run', [
+            $this->runAsProcess('released:jobs:package-run', [
                 $process->getEntity()->getId(),
             ]);
         }

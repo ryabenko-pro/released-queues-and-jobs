@@ -3,7 +3,7 @@ services:
     public: false
     class: Released\Common\Factory\RepositoryFactory
     arguments:
-      - "@=service(parameter('mobillogix_jobs.entity_manager'))"
+      - "@=service(parameter('released_jobs.entity_manager'))"
 
   released.repository.job:
     class: Released\JobsBundle\Repository\JobRepository
@@ -33,14 +33,14 @@ services:
     class: Released\JobsBundle\Service\Persistence\JobPersistenceService
     public: false
     arguments:
-      - "@=service(parameter('mobillogix_jobs.entity_manager'))"
+      - "@=service(parameter('released_jobs.entity_manager'))"
       - '%jobs.types%'
 
   job_process_persistence.service:
     class: Released\JobsBundle\Service\Persistence\JobProcessPersistenceService
     public: false
     arguments:
-      - "@=service(parameter('mobillogix_jobs.entity_manager'))"
+      - "@=service(parameter('released_jobs.entity_manager'))"
       - '%jobs.types%'
 
   job_planner.service:

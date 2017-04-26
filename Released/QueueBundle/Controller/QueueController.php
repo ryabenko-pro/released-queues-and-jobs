@@ -59,14 +59,14 @@ class QueueController extends Controller
         if ($task->isCancelled() || $task->isRunning()) {
             $this->addFlash('error', 'Task cannot be set to waiting.');
 
-            return $this->redirect($this->generateUrl('mobillogix_queue_task_index'));
+            return $this->redirect($this->generateUrl('released_queue_task_index'));
         }
         $task->dropState();
         $task->setState(QueuedTask::STATE_WAITING);
         $this->container->get('released.queue.repository.queued_task')->saveQueuedTask($task);
         $this->addFlash('warning', sprintf('Task #%s was set to waiting', $task->getId()));
 
-        return $this->redirect($this->generateUrl('mobillogix_queue_task_index'));
+        return $this->redirect($this->generateUrl('released_queue_task_index'));
     }
 
     /**
@@ -78,7 +78,7 @@ class QueueController extends Controller
         if ($task->isCancelled() || $task->isRunning()) {
             $this->addFlash('error', 'Task cannot be cancelled.');
 
-            return $this->redirect($this->generateUrl('mobillogix_queue_task_index'));
+            return $this->redirect($this->generateUrl('released_queue_task_index'));
         }
         $task->dropState();
         $task->setState(QueuedTask::STATE_CANCELLED);
@@ -86,7 +86,7 @@ class QueueController extends Controller
         $this->addFlash('warning', sprintf('Task #%s was cancelled', $task->getId()));
 
 
-        return $this->redirect($this->generateUrl('mobillogix_queue_task_index'));
+        return $this->redirect($this->generateUrl('released_queue_task_index'));
     }
 
     /**
@@ -98,7 +98,7 @@ class QueueController extends Controller
         if ($task->isCancelled() || $task->isRunning()) {
             $this->addFlash('error', 'Task cannot be added to queue.');
 
-            return $this->redirect($this->generateUrl('mobillogix_queue_task_index'));
+            return $this->redirect($this->generateUrl('released_queue_task_index'));
         }
         $task->dropState();
         $this->container->get('released.queue.repository.queued_task')->saveQueuedTask($task);
@@ -106,7 +106,7 @@ class QueueController extends Controller
         $this->addFlash('warning', sprintf('Task #%s was added to queue', $task->getId()));
 
 
-        return $this->redirect($this->generateUrl('mobillogix_queue_task_index'));
+        return $this->redirect($this->generateUrl('released_queue_task_index'));
     }
 
     /**

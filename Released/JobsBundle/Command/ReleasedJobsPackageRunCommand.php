@@ -19,7 +19,7 @@ class ReleasedJobsPackageRunCommand extends ContainerAwareCommand
 
     protected function configure()
     {
-        $this->setName("mobillogix:jobs:package-run")
+        $this->setName("released:jobs:package-run")
             ->setDescription("Execute single package in 'STATUS_SELECTED' state only.");
         $this->addArgument('id', InputArgument::REQUIRED, "Package id to run");
         $this->addOption('force', 'f', InputOption::VALUE_NONE, "Force executing package in any state");

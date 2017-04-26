@@ -15,7 +15,7 @@ class ReleasedJobsFinishCommand extends BaseSingleCommand
 
     protected function configure()
     {
-        $this->setName("mobillogix:jobs:finish");
+        $this->setName("released:jobs:finish");
     }
 
     /**

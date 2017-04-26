@@ -8,11 +8,11 @@
     Types filter:
     {% for type in types %}
         {% if type_filter == type.slug %}
-            <a class="btn btn-primary" href="{{ path('jobs_index') }}">
+            <a class="btn btn-primary" href="{{ path('released_jobs_index') }}">
                 {{ type.name }} <span class="badge"><i class="glyphicon glyphicon-remove-sign"></i></span>
             </a>
         {% else %}
-            <a class="btn btn-default" href="{{ path('jobs_index', {type: type.slug}) }}">{{ type.name }}</a>
+            <a class="btn btn-default" href="{{ path('released_jobs_index', {type: type.slug}) }}">{{ type.name }}</a>
         {% endif %}
     {% endfor %}
 
@@ -38,7 +38,7 @@
         </thead>
         <tbody>
         {% for job in jobs %}
-            {% set job_href = path('jobs_show', {id: job.id}) %}
+            {% set job_href = path('released_jobs_show', {id: job.id}) %}
             <tr class="job-{{ job.status }}">
                 <td><a href="{{ job_href }}">{{ job.id }}</a></td>
                 <td>

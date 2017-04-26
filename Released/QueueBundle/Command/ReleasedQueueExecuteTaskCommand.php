@@ -20,7 +20,7 @@ class ReleasedQueueExecuteTaskCommand extends BaseSingleCommand
 
     protected function configure()
     {
-        $this->setName("mobillogix:queue:execute-task")
+        $this->setName("released:queue:execute-task")
             ->setDescription("Execute queued tasks. May be started in parallel several instances.")
             ->addOption("with", "w", InputOption::VALUE_IS_ARRAY|InputOption::VALUE_OPTIONAL, "You can pass some string parameters to container in format 'name:value', just `name` is same like `name:true`. You can not override existing parameters!")
             ->addOption("type", "t", InputOption::VALUE_IS_ARRAY|InputOption::VALUE_OPTIONAL, "If present only execute tasks of this types.")

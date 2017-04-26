@@ -5,11 +5,11 @@
     Types filter:
     {% for type in event_types %}
         {% if type_filter == type.type %}
-            <a class="btn btn-small btn-primary" href="{{ path('jobs_show_events', {id: job.id}|merge(package_id ? {package_id: package_id} : {})) }}">
+            <a class="btn btn-small btn-primary" href="{{ path('released_jobs_show_events', {id: job.id}|merge(package_id ? {package_id: package_id} : {})) }}">
                 {{ type.type }} ({{ type.count }}) <span class="badge"><i class="glyphicon glyphicon-remove"></i></span>
             </a>
         {% else %}
-            <a class="btn btn-default" href="{{ path('jobs_show_events', {id: job.id, type: type.type}|merge(package_id ? {package_id: package_id} : {})) }}">{{ type.type }} ({{ type.count }}) </a>
+            <a class="btn btn-default" href="{{ path('released_jobs_show_events', {id: job.id, type: type.type}|merge(package_id ? {package_id: package_id} : {})) }}">{{ type.type }} ({{ type.count }}) </a>
         {% endif %}
     {% endfor %}
 

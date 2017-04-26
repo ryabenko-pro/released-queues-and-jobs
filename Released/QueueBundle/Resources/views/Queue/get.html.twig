@@ -46,21 +46,21 @@
                     {% if task.cancelled or task.running %}
                         ----
                     {% else %}
-                        <a class="btn btn-success" href="{{ path('mobillogix_queue_task_retry', {id: task.id}) }}">Restart</a>
+                        <a class="btn btn-success" href="{{ path('released_queue_task_retry', {id: task.id}) }}">Restart</a>
                     {% endif %}
                 </td>
                 <td>
                     {% if task.cancelled or task.running or task.waiting %}
                         ----
                     {% else %}
-                        <a class="btn btn-success" href="{{ path('mobillogix_queue_task_suspend', {id: task.id}) }}">Wait</a>
+                        <a class="btn btn-success" href="{{ path('released_queue_task_suspend', {id: task.id}) }}">Wait</a>
                     {% endif %}
                 </td>
                 <td>
                     {% if task.cancelled or task.running %}
                         ----
                     {% else %}
-                        <a class="btn btn-success" href="{{ path('mobillogix_queue_task_cancel', {id: task.id}) }}">Cancel</a>
+                        <a class="btn btn-success" href="{{ path('released_queue_task_cancel', {id: task.id}) }}">Cancel</a>
                     {% endif %}
                 </td>
                 <td>

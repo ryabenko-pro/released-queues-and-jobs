@@ -21,7 +21,7 @@ class JobsController extends Controller
 {
 
     /**
-     * @Route("/", name="jobs_index")
+     * @Route("/", name="released_jobs_index")
      * @Template()
      * @param Request $request
      * @return mixed
@@ -50,7 +50,7 @@ class JobsController extends Controller
 
     /**
      * Show packages
-     * @Route("/{id}", name="jobs_show", requirements={"id"="\d+"})
+     * @Route("/{id}", name="released_jobs_show", requirements={"id"="\d+"})
      * @Template("ReleasedJobsBundle:Jobs:packages.html.twig")
      * @param $id
      * @param Request $request
@@ -74,7 +74,7 @@ class JobsController extends Controller
     }
 
     /**
-     * @Route("/{id}/events", name="jobs_show_events")
+     * @Route("/{id}/events", name="released_jobs_show_events")
      * @Template()
      * @param $id
      * @param Request $request
@@ -141,7 +141,7 @@ class JobsController extends Controller
 
         $response['types'] = $types;
         $response['processes'] = $this->getRunningJobs();
-        $response['base_template'] = $this->container->getParameter('mobillogix_jobs.base_template');
+        $response['base_template'] = $this->container->getParameter('released_jobs.base_template');
 
         return $response;
     }

@@ -16,7 +16,7 @@ class ReleasedQueueCreateTaskCommand extends ContainerAwareCommand
 
     protected function configure()
     {
-        $this->setName("mobillogix:queue:create-task");
+        $this->setName("released:queue:create-task");
         $this->addArgument("type", InputArgument::REQUIRED, "Task type")
             ->addArgument("data", InputArgument::OPTIONAL, "Task data in json string (use quotes). Empty array by default.", '{}');
     }

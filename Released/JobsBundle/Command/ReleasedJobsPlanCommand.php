@@ -15,7 +15,7 @@ class ReleasedJobsPlanCommand extends BaseSingleCommand
 
     protected function configure()
     {
-        $this->setName("mobillogix:jobs:plan")
+        $this->setName("released:jobs:plan")
             ->setDescription("Run jobs planning to create packages");
     }
 

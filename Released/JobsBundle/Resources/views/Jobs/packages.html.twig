@@ -27,7 +27,7 @@
                 <td>{{ package.currentPackage }}</td>
                 <td><pre>{{ package.packages|yaml_encode(1) }}</pre></td>
                 <td>
-                    <a href="{{ path('jobs_show_events', {id: job.id, package_id: package.id}) }}">Show</a>
+                    <a href="{{ path('released_jobs_show_events', {id: job.id, package_id: package.id}) }}">Show</a>
                 </td>
             </tr>
         {% else %}

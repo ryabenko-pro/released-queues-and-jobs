@@ -17,7 +17,7 @@ class ReleasedJobsCreateCommand extends ContainerAwareCommand
 
     protected function configure()
     {
-        $this->setName("mobillogix:jobs:create");
+        $this->setName("released:jobs:create");
         $this->addArgument("type", InputArgument::REQUIRED, "Job type")
             ->addArgument("data", InputArgument::OPTIONAL, "Job data in json string (use quotes). Empty array by default.", '{}');
     }

@@ -21,7 +21,7 @@ class ReleasedJobsDevFullCommand extends BaseSingleCommand
 
     protected function configure()
     {
-        $this->setName("mobillogix:jobs:dev-full")
+        $this->setName("released:jobs:dev-full")
             ->setDescription("Plan, execute, finish, repeat. For development purposes only!");
     }
 
@@ -45,9 +45,9 @@ class ReleasedJobsDevFullCommand extends BaseSingleCommand
     {
         // Running as Symfony's Process component because entities do not get cleared properly in a single process.
         // TODO: running processes is slower
-        $this->runAsProcess('mobillogix:jobs:plan');
-        $this->runAsProcess('mobillogix:jobs:execute');
-        $this->runAsProcess('mobillogix:jobs:finish');
+        $this->runAsProcess('released:jobs:plan');
+        $this->runAsProcess('released:jobs:execute');
+        $this->runAsProcess('released:jobs:finish');
 
         $output->write("\r" . $this->symbols[$this->cycles % count($this->symbols)]);
     }

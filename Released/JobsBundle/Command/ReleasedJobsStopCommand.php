@@ -14,7 +14,7 @@ class ReleasedJobsStopCommand extends BaseSingleCommand
 
     protected function configure()
     {
-        $this->setName("mobillogix:jobs:stop")
+        $this->setName("released:jobs:stop")
             ->setDescription("Stop all jobs");
     }
 

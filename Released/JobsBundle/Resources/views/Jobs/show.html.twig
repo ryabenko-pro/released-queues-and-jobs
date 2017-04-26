@@ -42,7 +42,7 @@
                     <td>
                         {% set errors_count = job.events('error')|length %}
                         {% if errors_count > 0 %}
-                        <a href="{{ path('jobs_show_events', {id: job.id, type: 'error'}) }}">{{ errors_count }}</a>
+                        <a href="{{ path('released_jobs_show_events', {id: job.id, type: 'error'}) }}">{{ errors_count }}</a>
                         {% else %}
                         0
                         {% endif %}
@@ -68,10 +68,10 @@
     <div class="col-lg-12">
         <ul class="nav nav-tabs">
             <li role="presentation"{% block packages_active %}{% endblock %}>
-                <a href="{{ path('jobs_show', {id: job.id}) }}">Packages</a>
+                <a href="{{ path('released_jobs_show', {id: job.id}) }}">Packages</a>
             </li>
             <li role="presentation"{% block events_active %}{% endblock %}>
-                <a href="{{ path('jobs_show_events', {id: job.id}) }}">Events</a>
+                <a href="{{ path('released_jobs_show_events', {id: job.id}) }}">Events</a>
             </li>
         </ul>
         <br>

@@ -14,7 +14,7 @@ class ReleasedJobsStartCommand extends BaseSingleCommand
 
     protected function configure()
     {
-        $this->setName("mobillogix:jobs:start")
+        $this->setName("released:jobs:start")
             ->setDescription("Start jobs");
     }
 

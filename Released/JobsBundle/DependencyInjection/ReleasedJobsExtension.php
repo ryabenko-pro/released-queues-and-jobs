@@ -24,8 +24,8 @@ class ReleasedJobsExtension extends Extension
 
         $container->setParameter("jobs.types", $config);
 
-        $container->setParameter('mobillogix_jobs.base_template', $config['template']);
-        $container->setParameter('mobillogix_jobs.entity_manager', $config['em']);
+        $container->setParameter('released_jobs.base_template', $config['template']);
+        $container->setParameter('released_jobs.entity_manager', $config['em']);
 
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('services.yml');
