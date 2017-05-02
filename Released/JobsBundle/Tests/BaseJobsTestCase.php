@@ -13,6 +13,15 @@ use Released\JobsBundle\Service\ProcessExecutorService;
 use Released\JobsBundle\Tests\Stub\StubProcess;
 use PHPUnit_Framework_MockObject_MockObject;
 
+if (!class_exists('\PHPUnit_Framework_TestCase') && class_exists('\PHPUnit\Framework\TestCase')) {
+    class_alias('\PHPUnit\Framework\TestCase', '\PHPUnit_Framework_TestCase');
+}
+
+if (!class_exists('\PHPUnit_Framework_ExpectationFailedException') && class_exists('\PHPUnit\Framework\ExpectationFailedException')) {
+    class_alias('\PHPUnit\Framework\ExpectationFailedException', '\PHPUnit_Framework_ExpectationFailedException');
+}
+
+
 class BaseJobsTestCase extends \PHPUnit_Framework_TestCase
 {
 

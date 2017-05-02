@@ -57,7 +57,7 @@ class ProcessTest extends BaseJobsTestCase
         $executor = $this->getProcessExecutorMock(['updatePackageNumber', 'addLog']);
 
         $executor->expects($this->once())->method('addLog')
-            ->with($process, "Hello", 0);
+            ->with($process, "Hello", 2);
 
         $container = new Container();
         $process->execute($executor, $container);
