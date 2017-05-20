@@ -6,6 +6,7 @@ namespace Released\QueueBundle\Model;
 
 use Released\QueueBundle\Entity\QueuedTask;
 use Released\QueueBundle\Exception\TaskAddException;
+use Released\QueueBundle\Exception\TaskExecutionException;
 use Released\QueueBundle\Exception\TaskRetryException;
 use Released\QueueBundle\Service\TaskLoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -51,6 +52,17 @@ abstract class BaseTask
         }
 
         return $default;
+    }
+
+    public function fail($reason = null)
+    {
+        if (is_null($this->entity)) {
+            throw new TaskExecutionException("Task execution failed for reason: '{$reason}'");
+        }
+
+        $this->entity
+            ->addLog("Failed: '{$reason}'")
+            ->setState(QueuedTask::STATE_FAIL);
     }
 
     /**

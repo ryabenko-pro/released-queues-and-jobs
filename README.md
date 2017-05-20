@@ -34,13 +34,15 @@ flow goes like nothing happens.
 
 ## Configuration
 
-    released_queue:
-        template: ::base.html.twig  # optional  
-        doctrine.orm.default_entity_manager: default # optional
-        types:
-            echo: # Must be same as `getType` return value
-                name: Example echo task
-                class_name: Released\QueueBundle\Model\EchoTask
+```yaml
+released_queue:
+    template: ::base.html.twig  # optional  
+    doctrine.orm.default_entity_manager: default # optional
+    types:
+        echo: # Must be same as `getType` return value
+            name: Example echo task
+            class_name: Released\QueueBundle\Model\EchoTask
+```
                 
 > If you are getting `Type 'your_task' not found` exception most likely you forgot to define task in `config.yml`.  
 
@@ -49,22 +51,25 @@ flow goes like nothing happens.
 Usage is very simple. To create a queueable task you need just to extend class from `BaseTask` and implement abstract methods. After you do that you can plan a task 
 using `released.queue.task_queue.service` service: 
 
-        <?php
-        
-        $queue = $container->get('released.queue.task_queue.service');
-        
-        $task1 = new CreateQuote(['order_id' => $order->getId()]);
-        $queue->addTask($task1); // Plan task execution 
-        
-        // This task will only start after previous is successfully completed
-        $task2 = new ValidateQuoteTask(['order_id' => $order->getId(), $task1);
-        $queue->addTask($task2);
+```php
+<?php
+    $queue = $container->get('released.queue.task_queue.service');
+    
+    $task1 = new CreateQuoteTask(['order_id' => $order->getId()]);
+    $queue->addTask($task1); // Plan task execution 
+    
+    // This task will only start after previous is successfully completed
+    $task2 = new ValidateQuoteTask(['order_id' => $order->getId(), $task1);
+    $queue->addTask($task2);
+```
         
 Implemented `execute` method have Symfony container. See `EchoTask` for example.  
 
 To run enqueued tasks you need to run command in console:
 
-    ./bin/console released:queue:execute-task --permanent --cycles-limit=10 --cycle-delay=5 --memory-limit=XXX --single-id=THREAD_ID
+```console
+./bin/console released:queue:execute-task --permanent --cycles-limit=10 --cycle-delay=5 --memory-limit=XXX --single-id=THREAD_ID
+```
 
 Where:
 - `--permanent` do not exit command immediately but stay alive and wait for new tasks
