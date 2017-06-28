@@ -27,7 +27,11 @@ class QueueController extends Controller
 
         $qb = $this->get('released.queue.repository.queued_task')->createQueryBuilder("qt");
 
-        $qb->orderBy("qt.createdAt", "DESC");
+        $qb
+             ->orderBy("qt.id", "DESC")
+             ->orderBy("qt.startedAt", "DESC")
+//             ->orderBy("qt.createdAt", "DESC")
+        ;
 
         $type = $request->get('type');
         if ($type) {
@@ -114,7 +118,7 @@ class QueueController extends Controller
      * @param QueuedTask $task
      * @return array
      */
-    public function getAction(QueuedTask $task)
+    public function showAction(QueuedTask $task)
     {
         return [
             'base_template' => $this->container->getParameter('released.queue.base_template'),

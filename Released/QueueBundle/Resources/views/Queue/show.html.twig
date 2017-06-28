@@ -1,0 +1,59 @@
+{% extends base_template %}
+
+{% block body %}
+    {% for type, messages in app.session.flashbag.all %}
+        {% for message in messages %}
+            <div class="alert alert-{{ type }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endfor %}
+    <p>Server time: <strong>{{ "now"|date }}</strong></p>
+
+    <div class="small text-muted">Created at: {{ task.createdAt|date }}</div>
+
+    <span class="actions pull-right">
+        <span class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown"
+                    aria-haspopup="true" aria-expanded="false">
+                Actions
+            </button>
+            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                {% set onclick = '' %}
+                {% if task.running %}
+                    {% set onclick = 'onclick="return confirm(\'The task is still running. Are you sure you want to restart it?\');"' %}
+                {% endif %}
+                <a class="dropdown-item" href="{{ path('released_queue_task_retry', {id: task.id}) }}" {{ onclick }}>Restart</a>
+
+                {% if not task.waiting %}
+                    <a class="dropdown-item" href="{{ path('released_queue_task_suspend', {id: task.id}) }}">Wait</a>
+                {% endif %}
+
+                {% if not task.cancelled %}
+                    <a class="dropdown-item" href="{{ path('released_queue_task_cancel', {id: task.id}) }}">Cancel</a>
+                {% endif %}
+            </div>
+        </span>
+    </span>
+
+    <h1>Task #{{ task.id }} of type {{ task.type }}</h1>
+
+    {% if task.scheduledAt %}
+        <div>Scheduled: {{ task.scheduledAt|date }}</div>
+    {% endif %}
+    {% if task.startedAt is not empty %}
+        <div>Started: {{ task.startedAt|date }}</div>
+    {% endif %}
+    {% if task.finishedAt is not empty %}
+        <div>Finished: {{ task.finishedAt|date }}</div>
+    {% endif %}
+
+    <h4>Data</h4>
+    <pre style="background-color: lightgrey;">{{ task.data|yaml_encode(2) }}</pre>
+    {% if task.log is not empty %}
+        <hr>
+        <h4>Log</h4>
+        <pre style="background-color: lightgrey;">{{ task.log | raw }}</pre>
+    {% endif %}
+
+{% endblock %}

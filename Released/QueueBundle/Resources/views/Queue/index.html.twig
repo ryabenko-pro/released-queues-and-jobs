@@ -29,7 +29,7 @@
                 {{ type.name }} <span class="badge"><i class="glyphicon glyphicon-remove-sign"></i></span>
             </a>
         {% else %}
-            <a class="btn btn-default" href="{{ path('released_queue_task_index', {type: key}) }}">{{ type.name }}</a>
+            <a class="btn btn-secondary" href="{{ path('released_queue_task_index', {type: key}) }}">{{ type.name }}</a>
         {% endif %}
     {% endfor %}
 
@@ -44,56 +44,66 @@
     <table class="table table-striped table-hover" style="table-layout: fixed; max-width: 1140px;">
         <thead>
         <tr>
-            <th width="4%">ID</th>
             <th width="20%">Type</th>
-            <th width="10%">Status</th>
-            <th width="7%">Restart</th>
-            <th width="5%">Wait</th>
-            <th width="7%">Cancel</th>
-            <th width="16%">Data</th>
-            <th width="31%">Log</th>
+            <th width="">Status</th>
+            <th width="60%">Data/Log</th>
         </tr>
         </thead>
         <tbody>
         {% for task in tasks %}
+            {# @var task \Released\QueueBundle\Entity\QueuedTask #}
             <tr class="task-{{ task.state }}">
                 <td>
-                    <a href="{{ path('released_queue_task_get', {id: task.id}) }}">{{ task.id }}</a>
-                </td>
-                <td>
-                    <strong>{{ task.type }}</strong><br>
-                    <small>Created at: {{ task.createdAt|date }}</small>
+                    #{{ task.id }}
+                    <a href="{{ path('released_queue_task_show', {id: task.id}) }}">
+                        <strong>{{ task.type }}</strong>
+                    </a>
+                    <div class="small">Created: {{ task.createdAt|date }}</div>
+
                     {% if task.scheduledAt %}
-                        <div><small>Scheduled at: {{ task.scheduledAt|date }}</small></div>
+                        <div class="small">Scheduled: {{ task.scheduledAt|date }}</div>
                     {% endif %}
                 </td>
-                <td>{{ task.state }}</td>
-                <td>
-                    {% if task.cancelled or task.running %}
-                        ----
-                    {% else %}
-                        <a class="btn btn-success" href="{{ path('released_queue_task_retry', {id: task.id}) }}">Restart</a>
+                <td nowrap="">
+                    <strong>{{ task.state }}</strong>
+
+                    <span class="dropdown">
+                        <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Actions
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                            {% set onclick = '' %}
+                            {% if task.running %}
+                                {% set onclick = 'onclick="return confirm(\'The task is still running. Are you sure you want to restart it?\');"' %}
+                            {% endif %}
+                            <a class="dropdown-item" href="{{ path('released_queue_task_retry', {id: task.id}) }}" {{ onclick }}>Restart</a>
+
+                            {% if not task.waiting %}
+                                <a class="dropdown-item" href="{{ path('released_queue_task_suspend', {id: task.id}) }}">Wait</a>
+                            {% endif %}
+
+                            {% if not task.cancelled %}
+                                <a class="dropdown-item" href="{{ path('released_queue_task_cancel', {id: task.id}) }}">Cancel</a>
+                            {% endif %}
+                        </div>
+                    </span>
+
+                    {% if task.startedAt is not empty %}
+                        <div class="small">Started: {{ task.startedAt|date }}</div>
                     {% endif %}
-                </td>
-                <td>
-                    {% if task.cancelled or task.running or task.waiting %}
-                        ----
-                    {% else %}
-                        <a class="btn btn-success" href="{{ path('released_queue_task_suspend', {id: task.id}) }}">Wait</a>
+                    {% if task.finishedAt is not empty %}
+                        <div class="small">Finished: {{ task.finishedAt|date }}</div>
                     {% endif %}
-                </td>
-                <td>
-                    {% if task.cancelled or task.running %}
-                        ----
-                    {% else %}
-                        <a class="btn btn-success" href="{{ path('released_queue_task_cancel', {id: task.id}) }}">Cancel</a>
-                    {% endif %}
+
                 </td>
                 <td>
                     <pre>{{ task.data|yaml_encode(2) }}</pre>
-                </td>
-                <td>
-                    <pre>{{ task.log | raw }}</pre>
+                    {% if task.log is not empty %}
+                    <hr>
+                    <pre style="max-height: 150px; border: 1px solid lightgrey;">{{
+                        task.log | raw
+                    }}</pre>
+                    {% endif %}
                 </td>
             </tr>
         {% else %}

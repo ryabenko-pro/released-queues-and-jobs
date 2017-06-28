@@ -4,11 +4,11 @@ released_queue_task_index:
     defaults:
         _controller: 'ReleasedQueueBundle:Queue:index'
 
-released_queue_task_get:
+released_queue_task_show:
     path: /queued-tasks/{id}
     methods: [GET]
     defaults:
-        _controller: 'ReleasedQueueBundle:Queue:get'
+        _controller: 'ReleasedQueueBundle:Queue:show'
 
 released_queue_task_retry:
     path: /queued-tasks/{id}/retry
