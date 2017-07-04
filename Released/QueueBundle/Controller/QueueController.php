@@ -29,9 +29,17 @@ class QueueController extends Controller
 
         $qb
              ->orderBy("qt.id", "DESC")
-             ->orderBy("qt.startedAt", "DESC")
-//             ->orderBy("qt.createdAt", "DESC")
         ;
+
+        $state = $request->get('state');
+        if ($state) {
+            if (is_string($state)) {
+                $state = array_map("trim", explode(",", $state));
+            }
+
+            $qb->andWhere("qt.state IN (:state)")
+                ->setParameter('state', $state);
+        }
 
         $type = $request->get('type');
         if ($type) {

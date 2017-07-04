@@ -36,7 +36,8 @@
         </span>
     </span>
 
-    <h1>Task #{{ task.id }} of type {{ task.type }}</h1>
+    <h1>Task #{{ task.id }} of type '{{ task.type }}'</h1>
+    <h3>State: {{ task.state }}</h3>
 
     {% if task.scheduledAt %}
         <div>Scheduled: {{ task.scheduledAt|date }}</div>
