@@ -10,6 +10,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
  * @Route("/queue")
@@ -103,12 +104,20 @@ class QueueController extends Controller
 
     /**
      * @param QueuedTask $task
+     * @param Request $request
      * @return Response
      */
-    public function retryAction(QueuedTask $task)
+    public function retryAction(QueuedTask $task, Request $request)
     {
-        if ($task->isCancelled() || $task->isRunning()) {
-            $this->addFlash('error', 'Task cannot be added to queue.');
+        $force = $request->get('force');
+        if (($task->isCancelled() || $task->isRunning()) && !$force) {
+            $forceUrl = $this->generateUrl('released_queue_task_retry', [
+                'id' => $task->getId(),
+                'force' => true,
+            ], UrlGeneratorInterface::ABSOLUTE_URL);
+
+            $message = sprintf('Task is running. Go to %s to force action', $forceUrl);
+            $this->addFlash('error', $message);
 
             return $this->redirect($this->generateUrl('released_queue_task_index'));
         }
