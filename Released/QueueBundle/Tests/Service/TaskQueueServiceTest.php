@@ -40,7 +40,7 @@ class TaskQueueServiceTest extends \PHPUnit_Framework_TestCase
         $service->addTask($task);
     }
 
-    public function testShouldQueueTask()
+    public function testShouldEnqueueTask()
     {
         // GIVEN
         /** @var StubTask|\PHPUnit_Framework_MockObject_MockObject $task */
@@ -62,7 +62,36 @@ class TaskQueueServiceTest extends \PHPUnit_Framework_TestCase
         $repository->expects($this->once())
             ->method('saveQueuedTask')->with($entity);
 
-        $service = new TaskQueueService($container, $repository, ['stub' => $type]);
+        $service = new TaskQueueService($container, $repository, ['stub' => $type], 'not used id');
+
+        // WHEN
+        $service->addTask($task);
+    }
+
+    public function testShouldEnqueueLocalTask()
+    {
+        // GIVEN
+        /** @var StubTask|\PHPUnit_Framework_MockObject_MockObject $task */
+        $task = $this->getMockBuilder('Released\QueueBundle\Tests\StubTask')
+            ->setConstructorArgs([['some data']])->setMethods(['beforeAdd', 'execute'])->getMock();
+        $type = StubTask::getConfigType(true);
+
+        $container = new Container();
+        $repository = $this->getQueuedTypesRepositoryMock();
+
+        $entity = new QueuedTask();
+        $entity->setType($task->getType())
+            ->setServer('server_id')
+            ->setData($task->getData())
+            ->setPriority($type->getPriority());
+
+        $task->expects($this->once())->method('beforeAdd')
+            ->with($container);
+
+        $repository->expects($this->once())
+            ->method('saveQueuedTask')->with($entity);
+
+        $service = new TaskQueueService($container, $repository, ['stub' => $type], 'server_id');
 
         // WHEN
         $service->addTask($task);
@@ -103,7 +132,7 @@ class TaskQueueServiceTest extends \PHPUnit_Framework_TestCase
 
         $expectedEntity = clone $entity;
         $expectedEntity->setState($entity::STATE_DONE)
-            ->setFinishedAt(new \DateTime())
+            ->setFinishedAt(new \NoMSDateTime())
             ->setLog("[message]: Some log message
 ---
 [info]: Some raw output
@@ -145,8 +174,8 @@ class TaskQueueServiceTest extends \PHPUnit_Framework_TestCase
 
         $expectedEntity = clone $entity;
         $expectedEntity->setState($entity::STATE_RETRY)
-            ->setScheduledAt(new \DateTime("+120 seconds"))
-            ->setFinishedAt(new \DateTime())
+            ->setScheduledAt(new \NoMSDateTime("+120 seconds"))
+            ->setFinishedAt(new \NoMSDateTime())
             ->setLog('[info]: 
 ---
 [retry]: [Released\QueueBundle\Exception\TaskRetryException]: Some retry message
@@ -189,7 +218,7 @@ class TaskQueueServiceTest extends \PHPUnit_Framework_TestCase
 
         $expectedEntity = clone $entity;
         $expectedEntity->setState($entity::STATE_FAIL)
-            ->setFinishedAt(new \DateTime())
+            ->setFinishedAt(new \NoMSDateTime())
             ->setLog('[info]: 
 ---
 [retry]: [Released\QueueBundle\Exception\TaskRetryException]: Some retry message
@@ -234,7 +263,7 @@ class TaskQueueServiceTest extends \PHPUnit_Framework_TestCase
 
         $expectedEntity = clone $entity;
         $expectedEntity->setState($entity::STATE_FAIL)
-            ->setFinishedAt(new \DateTime())
+            ->setFinishedAt(new \NoMSDateTime())
             ->setLog('[info]: Some output
 ---
 [error]: [Released\QueueBundle\Exception\TaskExecutionException]: Some exception raised

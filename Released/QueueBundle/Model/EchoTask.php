@@ -15,7 +15,7 @@ class EchoTask extends BaseTask
      */
     public function execute(ContainerInterface $container, TaskLoggerInterface $logger)
     {
-        print_r($this->data);
+        echo "EchoTask speaks: " . print_r($this->data, true) . "\n\n";
     }
 
     /**

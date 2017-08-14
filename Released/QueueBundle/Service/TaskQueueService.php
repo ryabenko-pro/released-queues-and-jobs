@@ -28,17 +28,21 @@ class TaskQueueService implements TaskExecutorInterface, TaskLoggerInterface
     protected $queuedTaskRepository;
     /** @var ConfigQueuedTaskType[] */
     protected $types;
+    /** @var null|string */
+    protected $serverId;
 
     /**
      * @param ContainerInterface $container
      * @param QueuedTaskRepository $queuedTaskRepository
      * @param ConfigQueuedTaskType[] $types
+     * @param string|null $serverId ID of the server to run local tasks
      */
-    function __construct($container, $queuedTaskRepository, $types)
+    function __construct($container, $queuedTaskRepository, $types, $serverId = null)
     {
         $this->container = $container;
         $this->queuedTaskRepository = $queuedTaskRepository;
         $this->types = $types;
+        $this->serverId = $serverId;
     }
 
     /**
@@ -60,6 +64,10 @@ class TaskQueueService implements TaskExecutorInterface, TaskLoggerInterface
         $entity->setPriority($type->getPriority())
             ->setType($typeName)
             ->setData($task->getData());
+
+        if ($type->isLocal()) {
+            $entity->setServer($this->serverId);
+        }
         
         $entity->setScheduledAt($task->getScheduledAt());
 
@@ -167,7 +175,7 @@ class TaskQueueService implements TaskExecutorInterface, TaskLoggerInterface
         /** @var BaseTask[] $tasks */
         $tasks = [];
 
-        $entities = $this->queuedTaskRepository->getQueuedTasksForRun($types);
+        $entities = $this->queuedTaskRepository->getQueuedTasksForRun($types, $this->serverId);
         foreach ($entities as $entity) {
             $tasks[] = $this->mapEntityToTask($entity);
         }
@@ -197,7 +205,7 @@ class TaskQueueService implements TaskExecutorInterface, TaskLoggerInterface
 
         $type = $this->types[$typeName];
         if (is_array($type)) {
-            $type = new ConfigQueuedTaskType($type['name'], $type['class_name'], $type['priority']);
+            $type = new ConfigQueuedTaskType($type['name'], $type['class_name'], $type['priority'], $type['local']);
             $this->types[$typeName] = $type;
         }
 
@@ -229,5 +237,23 @@ class TaskQueueService implements TaskExecutorInterface, TaskLoggerInterface
     public function log(BaseTask $task, $message, $type = self::LOG_MESSAGE)
     {
         $task->getEntity()->addLog($message, $type);
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getServerId()
+    {
+        return $this->serverId;
+    }
+
+    /**
+     * @param null|string $serverId
+     * @return self
+     */
+    public function setServerId($serverId)
+    {
+        $this->serverId = $serverId;
+        return $this;
     }
 }

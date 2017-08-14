@@ -9,12 +9,14 @@ class ConfigQueuedTaskType
     protected $name;
     protected $className;
     protected $priority;
+    protected $isLocal;
 
-    function __construct($name, $className, $priority)
+    function __construct($name, $className, $priority, $isLocal = false)
     {
         $this->name = $name;
         $this->className = $className;
         $this->priority = $priority;
+        $this->isLocal = $isLocal;
     }
 
     /**
@@ -41,4 +43,11 @@ class ConfigQueuedTaskType
         return $this->priority;
     }
 
+    /**
+     * @return boolean
+     */
+    public function isLocal()
+    {
+        return $this->isLocal;
+    }
 }

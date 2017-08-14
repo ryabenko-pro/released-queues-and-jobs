@@ -23,12 +23,14 @@ class Configuration implements ConfigurationInterface
 
         $rootNode->children()
             ->scalarNode("template")->defaultValue("ReleasedQueueBundle::base.html.twig")->end()
+            ->scalarNode("server_id")->end()
             ->scalarNode("em")->defaultValue("doctrine.orm.default_entity_manager")->end()
             ->arrayNode("types")->requiresAtLeastOneElement()->prototype('array')
             ->children()
                 ->scalarNode("name")->isRequired()->end()
                 ->scalarNode("priority")->defaultValue(QueuedTask::PRIORITY_MEDIUM)->end()
                 ->scalarNode("class_name")->isRequired()->end()
+                ->scalarNode("local")->defaultValue(false)->end()
             ->end();
 
 

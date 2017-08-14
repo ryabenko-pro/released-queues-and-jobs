@@ -51,11 +51,11 @@ class QueuedTaskRepository extends EntityRepository
 
     /**
      * @param string[]|null $types If set - select only tasks on this types
+     * @param null $serverId
      * @param int $limit
-     * @return \Released\QueueBundle\Entity\QueuedTask[]
-     * @throws \Doctrine\ORM\TransactionRequiredException
+     * @return QueuedTask[]
      */
-    public function getQueuedTasksForRun($types = null, $limit = self::RUN_TASKS_LIMIT)
+    public function getQueuedTasksForRun($types = null, $serverId = null, $limit = self::RUN_TASKS_LIMIT)
     {
         $em = $this->getEntityManager();
 
@@ -71,6 +71,11 @@ class QueuedTaskRepository extends EntityRepository
         if (!is_null($types) && !empty($types)) {
             $qb->andWhere('qt.type IN (:types)')
                 ->setParameter('types', (array)$types);
+        }
+
+        if (!is_null($serverId)) {
+            $qb->andWhere('qt.server IS NULL OR qt.server = :server')
+                ->setParameter('server', $serverId);
         }
 
         $q = $qb->getQuery();

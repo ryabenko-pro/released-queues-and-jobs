@@ -40,6 +40,12 @@ class QueuedTask
     protected $type;
 
     /**
+     * Restrict executing server
+     * @ORM\Column(type="string", nullable=true)
+     */
+    protected $server;
+
+    /**
      * TODO: move to QueuedTaskType
      * @ORM\Column(type="string")
      */
@@ -134,6 +140,24 @@ class QueuedTask
     {
         $this->type = $type;
 
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getServer()
+    {
+        return $this->server;
+    }
+
+    /**
+     * @param mixed $server
+     * @return self
+     */
+    public function setServer($server)
+    {
+        $this->server = $server;
         return $this;
     }
 

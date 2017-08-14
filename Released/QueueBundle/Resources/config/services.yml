@@ -23,6 +23,7 @@ services:
       - "@service_container"
       - "@released.queue.repository.queued_task"
       - "%released.queue.task_types%"
+      - '%released.queue.server_id%'
 
   released.queue.task_queue.service:
     alias: released.queue.task_queue.service_database

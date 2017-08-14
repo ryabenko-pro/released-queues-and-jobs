@@ -25,9 +25,9 @@ class StubTask extends BaseTask
         return 'stub';
     }
 
-    static public function getConfigType()
+    static public function getConfigType($isLocal = false)
     {
-        return new ConfigQueuedTaskType('Stub task', __CLASS__, 5);
+        return new ConfigQueuedTaskType('Stub task', __CLASS__, 5, $isLocal);
     }
 
 }

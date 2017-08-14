@@ -10,7 +10,12 @@
             </div>
         {% endfor %}
     {% endfor %}
-    <h1>Tasks list</h1>
+    <h1>
+        Tasks list.
+        {% if server_id is not empty %}
+            <span class="badge badge-warning">Server id: '{{ server_id }}'</span>
+        {% endif %}
+    </h1>
 
     {% if processes %}
         <div class="alert alert-success">
@@ -25,11 +30,11 @@
     Types filter:
     {% for key, type in types %}
         {% if type_filter == key %}
-            <a class="btn btn-primary" href="{{ path('released_queue_task_index') }}">
-                {{ type.name }} <span class="badge"><i class="glyphicon glyphicon-remove-sign"></i></span>
+            <a class="btn btn-primary" href="{{ path('released_queue_task_index') }}" title="{{ type.name }}">
+                {{ key }} <span class="badge"><i class="glyphicon glyphicon-remove-sign"></i></span>
             </a>
         {% else %}
-            <a class="btn btn-secondary" href="{{ path('released_queue_task_index', {type: key}) }}">{{ type.name }}</a>
+            <a class="btn btn-secondary" href="{{ path('released_queue_task_index', {type: key}) }}" title="{{ type.name }}">{{ key }}</a>
         {% endif %}
     {% endfor %}
 
@@ -62,6 +67,13 @@
 
                     {% if task.scheduledAt %}
                         <div class="small">Scheduled: {{ task.scheduledAt|date }}</div>
+                    {% endif %}
+
+                    {% if task.server %}
+                        <div>Server: '{{ task.server }}'</div>
+                        {% if server_id != task.server %}
+                            <span class="badge badge-warning">Not runnable on this instance</span>
+                        {% endif %}
                     {% endif %}
                 </td>
                 <td nowrap="">

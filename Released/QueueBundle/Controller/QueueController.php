@@ -54,7 +54,10 @@ class QueueController extends Controller
 
         $processes = $this->getRunningQueues();
 
+        $serverId = $this->container->getParameter('released.queue.server_id');
+
         return [
+            'server_id' => $serverId,
             'base_template' => $this->container->getParameter('released.queue.base_template'),
             'types' => $types,
             'type_filter'  => $type,
@@ -137,7 +140,10 @@ class QueueController extends Controller
      */
     public function showAction(QueuedTask $task)
     {
+        $serverId = $this->container->getParameter('released.queue.server_id');
+
         return [
+            'server_id' => $serverId,
             'base_template' => $this->container->getParameter('released.queue.base_template'),
             'task'  => $task,
         ];

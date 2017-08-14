@@ -8,6 +8,17 @@
             </div>
         {% endfor %}
     {% endfor %}
+
+    {% if server_id is not empty %}
+        <span>Instance id: '{{ server_id }}';</span>
+    {% endif %}
+    {% if task.server %}
+        <span>To run on: '{{ task.server }}'</span>
+        {% if server_id != task.server %}
+            <span class="badge badge-warning">Not runnable on this instance</span>
+        {% endif %}
+    {% endif %}
+
     <p>Server time: <strong>{{ "now"|date }}</strong></p>
 
     <div class="small text-muted">Created at: {{ task.createdAt|date }}</div>

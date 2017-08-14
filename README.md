@@ -38,13 +38,17 @@ flow goes like nothing happens.
 released_queue:
     template: ::base.html.twig  # optional  
     doctrine.orm.default_entity_manager: default # optional
+    server_id: (Optional unique server identifier - must be set if a task with `local` exist)
     types:
         echo: # Must be same as `getType` return value
             name: Example echo task
             class_name: Released\QueueBundle\Model\EchoTask
+            local: false # Force this type of tasks run only on the server it was created on
 ```
-                
+
 > If you are getting `Type 'your_task' not found` exception most likely you forgot to define task in `config.yml`.  
+
+Local tasks will only be run on the server they were created. This is useful for cases like processing uploaded file in background with more then one server. 
 
 ## Usage
 
@@ -59,7 +63,7 @@ using `released.queue.task_queue.service` service:
     $queue->addTask($task1); // Plan task execution 
     
     // This task will only start after previous is successfully completed
-    $task2 = new ValidateQuoteTask(['order_id' => $order->getId(), $task1);
+    $task2 = new ValidateQuoteTask(['order_id' => $order->getId()], $task1);
     $queue->addTask($task2);
 ```
         
