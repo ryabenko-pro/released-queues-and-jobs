@@ -110,7 +110,7 @@ class Job
     }
 
     /**
-     * @param string $data
+     * @param string|array $data
      * @return self
      */
     public function setData($data)

@@ -143,7 +143,7 @@ class JobPersistenceServiceTest extends BaseJobsTestCase
         $service = new JobPersistenceService($em, []);
 
         // WHEN
-        $jobs = $service->getJobsForPlanning();
+        $service->getJobsForPlanning();
     }
 
     /**
@@ -182,7 +182,7 @@ class JobPersistenceServiceTest extends BaseJobsTestCase
         $service = new JobPersistenceService($em, $config);
 
         // WHEN
-        $jobs = $service->getJobsForPlanning();
+        $service->getJobsForPlanning();
     }
 
     public function testShouldReturnJobsForPlanning()
@@ -238,7 +238,7 @@ class JobPersistenceServiceTest extends BaseJobsTestCase
 
         $entity = new Job();
         $entity
-            ->setPlannedAt(new \DateTime())
+            ->setPlannedAt(new \NoMSDateTime())
             ->setData($data)
             ->setIsNeedPlanning(true)
             ->setJobType($type)
@@ -266,12 +266,12 @@ class JobPersistenceServiceTest extends BaseJobsTestCase
 
         $expectedEntity = new Job();
         $expectedEntity
-            ->setNextPlanningAt(new \DateTime("+11 seconds"))
+            ->setNextPlanningAt(new \NoMSDateTime("+11 seconds"))
             ->setIsNeedPlanning(false)
             ->setStatus($expectedEntity::STATUS_RUN)
             ->setJobType($type)
             ->setData($modifiedData)
-            ->setPlannedAt(new \DateTime());
+            ->setPlannedAt(new \NoMSDateTime());
 
         $jobRepository->expects($this->once())->method('saveJob')
             ->with($this->equalTo($expectedEntity));
@@ -324,8 +324,8 @@ class JobPersistenceServiceTest extends BaseJobsTestCase
 
         $expectedEntity = new Job();
         $expectedEntity
-            ->setFinishedAt(new \DateTime())
-            ->setNextPlanningAt(new \DateTime("+11 seconds"))
+            ->setFinishedAt(new \NoMSDateTime())
+            ->setNextPlanningAt(new \NoMSDateTime("+11 seconds"))
             ->setIsNeedPlanning(false)
             ->setStatus($expectedEntity::STATUS_DONE)
             ->setJobType($type)
@@ -362,7 +362,7 @@ class JobPersistenceServiceTest extends BaseJobsTestCase
         $expectedEntity = clone $entity;
         $expectedEntity
             ->setIsNeedPlanning(false)
-            ->setNextPlanningAt(new \DateTime("+11 seconds"));
+            ->setNextPlanningAt(new \NoMSDateTime("+11 seconds"));
 
         $jobRepository->expects($this->once())->method('saveJob')
             ->with($this->equalTo($expectedEntity));
@@ -376,7 +376,7 @@ class JobPersistenceServiceTest extends BaseJobsTestCase
      * @param array $data
      * @param string $type
      * @param array $methods
-     * @return PHPUnit_Framework_MockObject_MockObject
+     * @return PHPUnit_Framework_MockObject_MockObject|BaseJob
      */
     protected function getJobMock($entity = null, $data = [], $type = 'test', $methods = ['getType', 'isNeedsPlanning'])
     {

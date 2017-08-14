@@ -140,7 +140,7 @@ class JobProcessPersistenceServiceTest extends BaseJobsTestCase
         $expectedEntity = new JobPackage();
         $expectedEntity->setJob($jobEntity)
             ->setStatus(JobPackage::STATUS_RUN)
-            ->setStartedAt(new \DateTime());
+            ->setStartedAt(new \NoMSDateTime());
 
         $packageRepository->expects($this->once())->method('savePackage')
             ->with($this->equalTo($expectedEntity));
@@ -182,7 +182,7 @@ class JobProcessPersistenceServiceTest extends BaseJobsTestCase
         $expectedEntity = new JobPackage();
         $expectedEntity->setJob($jobEntity)
             ->setStatus(JobPackage::STATUS_DONE)
-            ->setFinishedAt(new \DateTime());
+            ->setFinishedAt(new \NoMSDateTime());
 
         $packageRepository->expects($this->once())->method('savePackage')
             ->with($this->equalTo($expectedEntity));

@@ -3,6 +3,7 @@
 namespace Released\JobsBundle\Tests;
 
 
+use Doctrine\ORM\EntityManager;
 use Released\JobsBundle\Repository\JobEventRepository;
 use Released\JobsBundle\Repository\JobPackageRepository;
 use Released\JobsBundle\Repository\JobRepository;
@@ -27,7 +28,7 @@ class BaseJobsTestCase extends \PHPUnit_Framework_TestCase
 
     /**
      * @param array $calls ['...:...Repository' => $repository]
-     * @return PHPUnit_Framework_MockObject_MockObject
+     * @return PHPUnit_Framework_MockObject_MockObject|EntityManager
      */
     protected function getEntityManagerMock($calls = [])
     {
