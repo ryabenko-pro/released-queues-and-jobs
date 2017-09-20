@@ -7,6 +7,7 @@ use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
 abstract class BaseSingleCommand extends ContainerAwareCommand
@@ -185,6 +186,7 @@ abstract class BaseSingleCommand extends ContainerAwareCommand
      * @param InputInterface $input
      * @param OutputInterface $output
      * @return mixed
+     * @throws ProcessFailedException
      */
     abstract public function doExecute(InputInterface $input, OutputInterface $output);
 
@@ -207,6 +209,10 @@ abstract class BaseSingleCommand extends ContainerAwareCommand
         $commandline = sprintf('%s %s/bin/console %s %s', PHP_BINARY, $dir, $command, $args);
         $process = new Process($commandline, null, null, null, null);
         $process->run();
+
+        if (!$process->isSuccessful()) {
+            throw new ProcessFailedException($process);
+        }
     }
 
     protected function isNeedToCheckStopFile()
