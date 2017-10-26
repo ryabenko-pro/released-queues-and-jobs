@@ -2,7 +2,6 @@
 
 namespace Released\JobsBundle\Repository;
 
-use Doctrine\DBAL\Connection;
 use Released\JobsBundle\Entity\Job;
 use Released\JobsBundle\Entity\JobPackage;
 use Doctrine\ORM\EntityRepository;
@@ -20,18 +19,8 @@ class JobPackageRepository extends EntityRepository
     {
         $em = $this->getEntityManager();
 
-        $connection = $em->getConnection();
-        $old = $connection->getTransactionIsolation();
-
-        $connection->setTransactionIsolation(Connection::TRANSACTION_READ_COMMITTED);
-        $em->beginTransaction();
-
         $em->persist($package);
         $em->flush($package);
-
-        $em->commit();
-        $connection->setTransactionIsolation($old);
-
 
         return $package->getId();
     }

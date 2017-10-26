@@ -3,6 +3,7 @@
 namespace Released\JobsBundle\Service\Persistence;
 
 
+use Released\Common\Doctrine\DoctrineUtils;
 use Released\JobsBundle\Entity\Job;
 use Released\JobsBundle\Entity\JobEvent;
 use Released\JobsBundle\Entity\JobType;
@@ -10,7 +11,6 @@ use Released\JobsBundle\Model\BaseJob;
 use Released\JobsBundle\Repository\JobEventRepository;
 use Released\JobsBundle\Repository\JobRepository;
 use Released\JobsBundle\Repository\JobTypeRepository;
-use Doctrine\ORM\EntityManager;
 
 class JobPersistenceService
 {
@@ -20,8 +20,8 @@ class JobPersistenceService
 
     protected $config;
 
-    /** @var EntityManager */
-    protected $em;
+    /** @var DoctrineUtils */
+    protected $doctrineUtils;
     /** @var JobTypeRepository */
     protected $jobTypeRepository;
     /** @var JobRepository */
@@ -32,7 +32,7 @@ class JobPersistenceService
     protected $types;
 
     /**
-     * @param EntityManager $em
+     * @param DoctrineUtils $doctrineUtils
      * @param array $config Config content job definitions, grouped by types:
      * array('types' => array(
      *  'test' => array(
@@ -42,11 +42,12 @@ class JobPersistenceService
      *  )
      * ))
      */
-    function __construct(EntityManager $em, $config)
+    function __construct(DoctrineUtils $doctrineUtils, $config)
     {
-        $this->em = $em;
+        $this->doctrineUtils = $doctrineUtils;
         $this->config = $config;
 
+        $em = $doctrineUtils->getEntityManager();
         $this->jobTypeRepository = $em->getRepository('ReleasedJobsBundle:JobType');
         $this->jobRepository = $em->getRepository('ReleasedJobsBundle:Job');
         $this->jobEventRepository = $em->getRepository('ReleasedJobsBundle:JobEvent');

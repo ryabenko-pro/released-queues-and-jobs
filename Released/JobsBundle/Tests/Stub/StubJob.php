@@ -42,13 +42,13 @@ class StubJob extends BaseJob
     }
 
     /**
-     * Creating processes for incoming data
-     * @param ContainerInterface $container
-     * @return bool True if need more planing, false if no more planning needed
+     * {@inheritdoc}
      */
     protected function doPlan(ContainerInterface $container)
     {
-
+        for ($i = 0; $i < 10; $i++) {
+            $this->addProcess(['i' => $i]);
+        }
     }
 
 }

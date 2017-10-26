@@ -30,7 +30,7 @@ class Job
     protected $id;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Released\JobsBundle\Entity\JobType")
+     * @ORM\ManyToOne(targetEntity="Released\JobsBundle\Entity\JobType", cascade={"persist"})
      * @ORM\JoinColumn(name="job_type_id")
      */
     protected $jobType;

@@ -3,12 +3,14 @@
 namespace Released\JobsBundle\Service\Persistence;
 
 
+use Released\Common\Doctrine\DoctrineUtils;
 use Released\JobsBundle\Entity\JobEvent;
 use Released\JobsBundle\Entity\JobPackage;
 use Released\JobsBundle\Model\BaseProcess;
 use Released\JobsBundle\Repository\JobEventRepository;
 use Released\JobsBundle\Repository\JobPackageRepository;
 use Doctrine\ORM\EntityManager;
+use Released\JobsBundle\Repository\JobRepository;
 use Released\JobsBundle\Util\Options;
 
 class JobProcessPersistenceService
@@ -19,8 +21,13 @@ class JobProcessPersistenceService
 
     protected $config;
 
+    /** @var DoctrineUtils */
+    protected $doctrineUtils;
+
     /** @var EntityManager */
     protected $em;
+    /** @var JobRepository */
+    protected $jobRepository;
     /** @var JobPackageRepository */
     protected $jobPackageRepository;
     /** @var JobEventRepository */
@@ -29,7 +36,7 @@ class JobProcessPersistenceService
     protected $types;
 
     /**
-     * @param EntityManager $em
+     * @param DoctrineUtils $doctrineUtils
      * @param array $config Config content job definitions, grouped by types:
      * array('types' => array(
      *  'test' => array(
@@ -39,11 +46,12 @@ class JobProcessPersistenceService
      *  )
      * ))
      */
-    function __construct(EntityManager $em, $config)
+    function __construct(DoctrineUtils $doctrineUtils, $config)
     {
-        $this->em = $em;
+        $this->doctrineUtils = $doctrineUtils;
         $this->config = $config;
 
+        $em = $doctrineUtils->getEntityManager();
         $this->jobPackageRepository = $em->getRepository('ReleasedJobsBundle:JobPackage');
         $this->jobEventRepository = $em->getRepository('ReleasedJobsBundle:JobEvent');
         $this->jobRepository = $em->getRepository('ReleasedJobsBundle:Job');
@@ -55,7 +63,7 @@ class JobProcessPersistenceService
         $entity->setStatus(JobPackage::STATUS_RUN)
             ->setStartedAt(new \DateTime());
 
-        $this->jobPackageRepository->savePackage($entity);
+        $this->savePackage($entity);
 
         $event = new JobEvent();
         $event->setJob($entity->getJob())
@@ -71,7 +79,7 @@ class JobProcessPersistenceService
         $entity->setStatus(JobPackage::STATUS_DONE)
             ->setFinishedAt(new \DateTime());
 
-        $this->jobPackageRepository->savePackage($entity);
+        $this->savePackage($entity);
 
         $event = new JobEvent();
         $event->setJob($entity->getJob())
@@ -88,7 +96,10 @@ class JobProcessPersistenceService
      */
     public function savePackage(JobPackage $package)
     {
-        $this->jobPackageRepository->savePackage($package);
+        $this->doctrineUtils->repeatable(function (EntityManager $em) use ($package) {
+            $em->persist($package);
+            $em->flush($package);
+        });
     }
 
     /**

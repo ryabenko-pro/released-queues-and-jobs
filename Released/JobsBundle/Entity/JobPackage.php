@@ -31,7 +31,7 @@ class JobPackage
     protected $id;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Released\JobsBundle\Entity\Job", inversedBy="packages")
+     * @ORM\ManyToOne(targetEntity="Released\JobsBundle\Entity\Job", inversedBy="packages", cascade={"PERSIST"})
      */
     protected $job;
 

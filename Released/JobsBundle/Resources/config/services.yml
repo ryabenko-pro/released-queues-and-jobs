@@ -29,18 +29,23 @@ services:
     arguments:
       - Released\JobsBundle\Entity\JobEvent
 
+  released.jobs.doctrine_utils:
+    lazy: true
+    class: Released\Common\Doctrine\DoctrineUtils
+    arguments: ['@doctrine', ~, "@=parameter('released_jobs.entity_manager')"]
+
   job_persistence.service:
     class: Released\JobsBundle\Service\Persistence\JobPersistenceService
     public: false
     arguments:
-      - "@=service(parameter('released_jobs.entity_manager'))"
+      - "@released.jobs.doctrine_utils"
       - '%jobs.types%'
 
   job_process_persistence.service:
     class: Released\JobsBundle\Service\Persistence\JobProcessPersistenceService
     public: false
     arguments:
-      - "@=service(parameter('released_jobs.entity_manager'))"
+      - "@released.jobs.doctrine_utils"
       - '%jobs.types%'
 
   job_planner.service:
