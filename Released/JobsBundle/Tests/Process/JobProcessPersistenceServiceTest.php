@@ -9,6 +9,7 @@ use Released\JobsBundle\Entity\JobPackage;
 use Released\JobsBundle\Entity\JobType;
 use Released\JobsBundle\Service\Persistence\JobProcessPersistenceService;
 use Released\JobsBundle\Tests\BaseJobsTestCase;
+use Released\JobsBundle\Tests\Stub\StubDoctrineUtils;
 use Released\JobsBundle\Tests\Stub\StubProcess;
 use Released\JobsBundle\Util\Options;
 
@@ -37,11 +38,7 @@ class JobProcessPersistenceServiceTest extends BaseJobsTestCase
             'ReleasedJobsBundle:JobPackage' => $packageRepository,
         ]);
 
-        $packageRepository->expects($this->once())
-            ->method('savePackage')->with($package)
-            ->willReturn(1);
-
-        $service = new JobProcessPersistenceService($em, []);
+        $service = new JobProcessPersistenceService(new StubDoctrineUtils($em), []);
 
         // WHEN
         $service->savePackage($package);
@@ -72,7 +69,7 @@ class JobProcessPersistenceServiceTest extends BaseJobsTestCase
 
         $config = ['types' => []];
         $config['types']['test'] = ['process_class' => __CLASS__];
-        $service = new JobProcessPersistenceService($em, $config);
+        $service = new JobProcessPersistenceService(new StubDoctrineUtils($em), $config);
 
         // WHEN
         $service->getProcessesForRun();
@@ -103,7 +100,7 @@ class JobProcessPersistenceServiceTest extends BaseJobsTestCase
             'process_class' => 'Released\JobsBundle\Tests\Stub\StubProcess',
             'packages_chunk' => 10,
         ];
-        $service = new JobProcessPersistenceService($em, $config);
+        $service = new JobProcessPersistenceService(new StubDoctrineUtils($em), $config);
 
         // WHEN
         $expected = [];
@@ -135,15 +132,12 @@ class JobProcessPersistenceServiceTest extends BaseJobsTestCase
             'ReleasedJobsBundle:JobEvent' => $eventRepository,
         ]);
 
-        $service = new JobProcessPersistenceService($em, []);
+        $service = new JobProcessPersistenceService(new StubDoctrineUtils($em), []);
 
         $expectedEntity = new JobPackage();
         $expectedEntity->setJob($jobEntity)
             ->setStatus(JobPackage::STATUS_RUN)
             ->setStartedAt(new \NoMSDateTime());
-
-        $packageRepository->expects($this->once())->method('savePackage')
-            ->with($this->equalTo($expectedEntity));
 
         $event = new JobEvent();
         $event->setJob($jobEntity)
@@ -177,15 +171,12 @@ class JobProcessPersistenceServiceTest extends BaseJobsTestCase
             'ReleasedJobsBundle:Job' => $jobRepository,
         ]);
 
-        $service = new JobProcessPersistenceService($em, []);
+        $service = new JobProcessPersistenceService(new StubDoctrineUtils($em), []);
 
         $expectedEntity = new JobPackage();
         $expectedEntity->setJob($jobEntity)
             ->setStatus(JobPackage::STATUS_DONE)
             ->setFinishedAt(new \NoMSDateTime());
-
-        $packageRepository->expects($this->once())->method('savePackage')
-            ->with($this->equalTo($expectedEntity));
 
         $event = new JobEvent();
         $event->setJob($jobEntity)

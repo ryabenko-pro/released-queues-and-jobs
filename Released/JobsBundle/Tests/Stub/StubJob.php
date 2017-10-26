@@ -46,7 +46,7 @@ class StubJob extends BaseJob
      */
     protected function doPlan(ContainerInterface $container)
     {
-        for ($i = 0; $i < 10; $i++) {
+        for ($i = 0; $i < $this->getData('limit', 0); $i++) {
             $this->addProcess(['i' => $i]);
         }
     }

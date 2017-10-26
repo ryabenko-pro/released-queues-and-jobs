@@ -6,6 +6,8 @@ namespace Released\Common\Doctrine;
 use Doctrine\Bundle\DoctrineBundle\Registry;
 use Doctrine\DBAL\Exception\DeadlockException;
 use Doctrine\ORM\EntityManager;
+use Monolog\Logger;
+use Psr\Log\LoggerInterface;
 
 class DoctrineUtils
 {
@@ -13,11 +15,14 @@ class DoctrineUtils
     protected $doctrine;
     /** @var string */
     protected $name;
+    /** @var LoggerInterface */
+    protected $logger;
 
-    public function __construct(Registry $doctrine, $name = null)
+    public function __construct(Registry $doctrine, $name = null, LoggerInterface $logger = null)
     {
         $this->doctrine = $doctrine;
         $this->name = $name;
+        $this->logger = $logger;
     }
 
     /**
@@ -37,9 +42,15 @@ class DoctrineUtils
 
                 break;
             } catch (DeadlockException $exception) {
-                echo "Deadlock caught\n";
+                if (!is_null($this->logger)) {
+                    $this->logger->log(Logger::NOTICE, "Deadlock detected. Restarting.");
+                }
 
                 if (--$repeat == 0) {
+                    if (!is_null($this->logger)) {
+                        $this->logger->log(Logger::ERROR, "Too many deadlocks detected. Throwing exception.");
+                    }
+
                     throw $exception;
                 }
             }

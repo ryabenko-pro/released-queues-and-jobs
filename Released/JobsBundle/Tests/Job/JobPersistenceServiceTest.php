@@ -9,6 +9,7 @@ use Released\JobsBundle\Entity\JobType;
 use Released\JobsBundle\Model\BaseJob;
 use Released\JobsBundle\Service\Persistence\JobPersistenceService;
 use Released\JobsBundle\Tests\BaseJobsTestCase;
+use Released\JobsBundle\Tests\Stub\StubDoctrineUtils;
 use Released\JobsBundle\Tests\Stub\StubJob;
 use PHPUnit_Framework_MockObject_MockObject;
 
@@ -63,7 +64,7 @@ class JobPersistenceServiceTest extends BaseJobsTestCase
         $job->expects($this->once())->method('setEntity')
             ->with($this->equalTo($expected));
 
-        $service = new JobPersistenceService($em, []);
+        $service = new JobPersistenceService(new StubDoctrineUtils($em), []);
 
         // WHEN
         $service->addJob($job);
@@ -101,7 +102,7 @@ class JobPersistenceServiceTest extends BaseJobsTestCase
         $job->expects($this->once())->method('getType')
             ->willReturn('test');
 
-        $service = new JobPersistenceService($em, $this->config);
+        $service = new JobPersistenceService(new StubDoctrineUtils($em), $this->config);
 
         // WHEN
         $service->addJob($job);
@@ -140,7 +141,7 @@ class JobPersistenceServiceTest extends BaseJobsTestCase
         $jobRepository->expects($this->once())->method('findJobsForPlanning')
             ->willReturn($entities);
 
-        $service = new JobPersistenceService($em, []);
+        $service = new JobPersistenceService(new StubDoctrineUtils($em), []);
 
         // WHEN
         $service->getJobsForPlanning();
@@ -179,7 +180,7 @@ class JobPersistenceServiceTest extends BaseJobsTestCase
 
         $config = ['types' => []];
         $config['types']['test'] = ['job_class' => __CLASS__];
-        $service = new JobPersistenceService($em, $config);
+        $service = new JobPersistenceService(new StubDoctrineUtils($em), $config);
 
         // WHEN
         $service->getJobsForPlanning();
@@ -213,7 +214,7 @@ class JobPersistenceServiceTest extends BaseJobsTestCase
         $jobRepository->expects($this->once())->method('findJobsForPlanning')
             ->willReturn($entities);
 
-        $service = new JobPersistenceService($em, $this->config);
+        $service = new JobPersistenceService(new StubDoctrineUtils($em), $this->config);
 
         // WHEN
         $jobs = $service->getJobsForPlanning();
@@ -254,7 +255,7 @@ class JobPersistenceServiceTest extends BaseJobsTestCase
             ->with($this->equalTo('ReleasedJobsBundle:JobEvent'))
             ->willReturn($jobEventRepository);
 
-        $service = new JobPersistenceService($em, $this->config);
+        $service = new JobPersistenceService(new StubDoctrineUtils($em), $this->config);
 
         $job = $this->getJobMock($entity, $data, 'test', ['getType', 'getData', 'isNeedsPlanning']);
         $job->expects($this->once())->method('getData')->willReturn($modifiedData);
@@ -311,7 +312,7 @@ class JobPersistenceServiceTest extends BaseJobsTestCase
             ->with($this->equalTo('ReleasedJobsBundle:JobEvent'))
             ->willReturn($jobEventRepository);
 
-        $service = new JobPersistenceService($em, $this->config);
+        $service = new JobPersistenceService(new StubDoctrineUtils($em), $this->config);
 
         $job = $this->getJobMock($entity, $data, 'test', ['getType', 'getData', 'isNeedsPlanning']);
         $job->expects($this->once())->method('isNeedsPlanning')->willReturn(false);
@@ -352,7 +353,7 @@ class JobPersistenceServiceTest extends BaseJobsTestCase
             1 => ['ReleasedJobsBundle:Job', $jobRepository],
         ]);
 
-        $service = new JobPersistenceService($em, $this->config);
+        $service = new JobPersistenceService(new StubDoctrineUtils($em), $this->config);
 
         /** @var BaseJob|PHPUnit_Framework_MockObject_MockObject $job */
         $job = $this->getJobMock($entity, [], 'test', ['getType', 'getNextPlanningAt', 'isNeedsPlanning']);
