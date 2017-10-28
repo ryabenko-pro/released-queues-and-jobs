@@ -29,6 +29,7 @@ class Configuration implements ConfigurationInterface
             ->children()
                 ->scalarNode("name")->isRequired()->end()
                 ->scalarNode("priority")->defaultValue(QueuedTask::PRIORITY_MEDIUM)->end()
+                ->scalarNode("retry_limit")->defaultValue(1)->end()
                 ->scalarNode("class_name")->isRequired()->end()
                 ->scalarNode("local")->defaultValue(false)->end()
             ->end();

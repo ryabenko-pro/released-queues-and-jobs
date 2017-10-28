@@ -105,29 +105,45 @@ class TaskQueueService implements TaskExecutorInterface, TaskLoggerInterface
         try {
             ob_start();
             $task->execute($this->container, $this);
-            $log = $this->catchOutput();
+            $entity->setState($entity::STATE_DONE);
 
-            $entity->setState($entity::STATE_DONE)
-                ->addLog($log);
+            $output = $this->catchOutput();
+            if (!empty($output)) {
+                $entity->addLog($output, 'info');
+            }
         } catch (TaskRetryException $exception) {
-            if ($entity::STATE_RETRY == $entity->getState()) {
+            $type = $this->getType($task->getType());
+
+            if ($entity->getTries() >= $type->getRetryLimit()) {
                 // Don't retry again.
-                // TODO: add retry count and default value in configuration
-                $entity->setState($entity::STATE_FAIL)
-                    ->addLog($this->catchOutput(), 'info');
+                $entity->setState($entity::STATE_FAIL);
+
+                $output = $this->catchOutput();
+                if (!empty($output)) {
+                    $entity->addLog($output, 'info');
+                }
 
                 $log = sprintf("[%s]: %s", get_class($exception), $exception->getMessage());
                 $entity->addLog($log, 'retry');
-                $entity->addLog('Retry limit exceeded', 'fail');
+                $entity->addLog("Retry limit ({$type->getRetryLimit()}) exceeded", 'fail');
             } else {
-                $entity->setState($entity::STATE_RETRY)
-                    ->addLog($this->catchOutput(), 'info');
                 $log = sprintf("[%s]: %s", get_class($exception), $exception->getMessage());
-                $time = sprintf("+%d seconds", $exception->getTimeout() ?: 60);
+
+                $output = $this->catchOutput();
+                if (!empty($output)) {
+                    $entity->addLog($output, 'info');
+                }
 
                 $entity
-                    ->setScheduledAt(new \DateTime($time))
+                    ->setState($entity::STATE_RETRY)
+                    // TODO: make it an expression
+                    ->setTries($entity->getTries() + 1)
                     ->addLog($log, 'retry');
+
+                $timeout = $exception->getTimeout();
+                if (!is_null($timeout) && is_int($timeout)) {
+                    $entity->setScheduledAt(new \DateTime("+{$timeout} seconds"));
+                }
             }
 
         } catch (ExpectationFailedException $exception) {
@@ -137,8 +153,12 @@ class TaskQueueService implements TaskExecutorInterface, TaskLoggerInterface
 //            $this->container->get('event_dispatcher')
 //                ->dispatch(QueueEventNames::UNEXPECTED_HTTP_CODE, new QueueExceptionEvent($ex->getMessage()));
         } catch (\Exception $exception) {
-            $entity->setState($entity::STATE_FAIL)
-                ->addLog($this->catchOutput(), 'info');
+            $entity->setState($entity::STATE_FAIL);
+            $output = $this->catchOutput();
+            if (!empty($output)) {
+                $entity->addLog($output, 'info');
+            }
+
             $log = sprintf("[%s]: %s", get_class($exception), $exception->getMessage());
             $entity->addLog($log, 'error');
         }
@@ -190,7 +210,7 @@ class TaskQueueService implements TaskExecutorInterface, TaskLoggerInterface
         $content = ob_get_contents();
         ob_end_flush();
 
-        return $content;
+        return trim($content);
     }
 
     /**
@@ -205,7 +225,7 @@ class TaskQueueService implements TaskExecutorInterface, TaskLoggerInterface
 
         $type = $this->types[$typeName];
         if (is_array($type)) {
-            $type = new ConfigQueuedTaskType($type['name'], $type['class_name'], $type['priority'], $type['local']);
+            $type = new ConfigQueuedTaskType($type['name'], $type['class_name'], $type['priority'], $type['local'], $type['retry_limit']);
             $this->types[$typeName] = $type;
         }
 

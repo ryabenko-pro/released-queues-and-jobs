@@ -103,6 +103,12 @@ class QueuedTask
     protected $pid;
     
     /**
+     * @var integer
+     * @ORM\Column(type="integer", options={"default": 0})
+     */
+    protected $tries = 0;
+
+    /**
      * @var \DateTime
      * @ORM\Column(name="scheduled_at", type="datetime", nullable = true)
      */
@@ -320,7 +326,7 @@ class QueuedTask
      */
     public function addLog($message, $type = 'info')
     {
-        $this->log .= sprintf("[%s]: %s\n---\n", $type, $message);
+        $this->log .= sprintf("%s [%s]: %s\n---\n", date('Y-m-d H:i:s'), $type, $message);
 
         return $this;
     }
@@ -414,6 +420,24 @@ class QueuedTask
     {
         $this->scheduledAt = $scheduledAt;
 
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getTries()
+    {
+        return $this->tries;
+    }
+
+    /**
+     * @param int $tries
+     * @return self
+     */
+    public function setTries($tries)
+    {
+        $this->tries = $tries;
         return $this;
     }
 }

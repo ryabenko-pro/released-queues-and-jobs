@@ -44,7 +44,7 @@ class TaskQueueServiceTest extends \PHPUnit_Framework_TestCase
     {
         // GIVEN
         /** @var StubTask|\PHPUnit_Framework_MockObject_MockObject $task */
-        $task = $this->getMockBuilder('Released\QueueBundle\Tests\StubTask')
+        $task = $this->getMockBuilder(StubTask::class)
             ->setConstructorArgs([['some data']])->setMethods(['beforeAdd', 'execute'])->getMock();
         $type = StubTask::getConfigType();
 
@@ -72,7 +72,7 @@ class TaskQueueServiceTest extends \PHPUnit_Framework_TestCase
     {
         // GIVEN
         /** @var StubTask|\PHPUnit_Framework_MockObject_MockObject $task */
-        $task = $this->getMockBuilder('Released\QueueBundle\Tests\StubTask')
+        $task = $this->getMockBuilder(StubTask::class)
             ->setConstructorArgs([['some data']])->setMethods(['beforeAdd', 'execute'])->getMock();
         $type = StubTask::getConfigType(true);
 
@@ -102,7 +102,7 @@ class TaskQueueServiceTest extends \PHPUnit_Framework_TestCase
         // GIVEN
         $entity = new QueuedTask();
         /** @var \PHPUnit_Framework_MockObject_MockObject|StubTask $task */
-        $task = $this->getMockBuilder('Released\QueueBundle\Tests\StubTask')
+        $task = $this->getMockBuilder(StubTask::class)
             ->setConstructorArgs([['some data'], $entity])
             ->setMethods(['execute'])->getMock();
 
@@ -131,13 +131,15 @@ class TaskQueueServiceTest extends \PHPUnit_Framework_TestCase
             ->method('updateDependTasks')->with($entity);
 
         $expectedEntity = clone $entity;
+
+        $datetime = $this->getDatetime();
         $expectedEntity->setState($entity::STATE_DONE)
             ->setFinishedAt(new \NoMSDateTime())
-            ->setLog("[message]: Some log message
+            ->setLog(sprintf("%s [message]: Some log message
 ---
-[info]: Some raw output
+%s [info]: Some raw output
 ---
-");
+", $datetime, $datetime));
 
         $repository->expects($this->once())
             ->method('saveQueuedTask')->with($expectedEntity);
@@ -152,12 +154,14 @@ class TaskQueueServiceTest extends \PHPUnit_Framework_TestCase
     {
         // GIVEN
         $entity = new QueuedTask();
+        $entity->setTries(2);
+
         /** @var \PHPUnit_Framework_MockObject_MockObject|StubTask $task */
-        $task = $this->getMockBuilder('Released\QueueBundle\Tests\StubTask')
+        $task = $this->getMockBuilder(StubTask::class)
             ->setConstructorArgs([['some data'], $entity])
             ->setMethods(['execute'])->getMock();
 
-        $type = StubTask::getConfigType();
+        $type = StubTask::getConfigType(false, 5);
 
         $entity->setType($task->getType())
             ->setData($task->getData())
@@ -173,14 +177,17 @@ class TaskQueueServiceTest extends \PHPUnit_Framework_TestCase
             ->method('setTaskStarted')->with($entity);
 
         $expectedEntity = clone $entity;
-        $expectedEntity->setState($entity::STATE_RETRY)
+
+        $datetime = $this->getDatetime();
+
+        $expectedEntity
+            ->setState($entity::STATE_RETRY)
+            ->setTries(3)
             ->setScheduledAt(new \NoMSDateTime("+120 seconds"))
             ->setFinishedAt(new \NoMSDateTime())
-            ->setLog('[info]: 
+            ->setLog(sprintf('%s [retry]: [Released\QueueBundle\Exception\TaskRetryException]: Some retry message
 ---
-[retry]: [Released\QueueBundle\Exception\TaskRetryException]: Some retry message
----
-');
+', $datetime, $datetime));
 
         $repository->expects($this->once())
             ->method('saveQueuedTask')->with($expectedEntity);
@@ -191,16 +198,18 @@ class TaskQueueServiceTest extends \PHPUnit_Framework_TestCase
         $service->executeTask($task);
     }
 
-    public function testShouldNotRetryMoreThenOnce()
+    public function testShouldNotRetryMoreThenConfigured()
     {
         // GIVEN
         $entity = new QueuedTask();
+        $entity->setTries(2);
+
         /** @var \PHPUnit_Framework_MockObject_MockObject|StubTask $task */
-        $task = $this->getMockBuilder('Released\QueueBundle\Tests\StubTask')
+        $task = $this->getMockBuilder(StubTask::class)
             ->setConstructorArgs([['some data'], $entity])
             ->setMethods(['execute'])->getMock();
 
-        $type = StubTask::getConfigType();
+        $type = StubTask::getConfigType(false, 2);
 
         $entity->setType($task->getType())
             ->setState($entity::STATE_RETRY)
@@ -217,15 +226,15 @@ class TaskQueueServiceTest extends \PHPUnit_Framework_TestCase
             ->method('setTaskStarted')->with($entity);
 
         $expectedEntity = clone $entity;
+
+        $datetime = $this->getDatetime();
         $expectedEntity->setState($entity::STATE_FAIL)
             ->setFinishedAt(new \NoMSDateTime())
-            ->setLog('[info]: 
+            ->setLog(sprintf('%s [retry]: [Released\QueueBundle\Exception\TaskRetryException]: Some retry message
 ---
-[retry]: [Released\QueueBundle\Exception\TaskRetryException]: Some retry message
+%s [fail]: Retry limit (2) exceeded
 ---
-[fail]: Retry limit exceeded
----
-');
+', $datetime, $datetime, $datetime));
 
         $repository->expects($this->once())
             ->method('saveQueuedTask')->with($expectedEntity);
@@ -241,7 +250,7 @@ class TaskQueueServiceTest extends \PHPUnit_Framework_TestCase
         // GIVEN
         $entity = new QueuedTask();
         /** @var \PHPUnit_Framework_MockObject_MockObject|StubTask $task */
-        $task = $this->getMockBuilder('Released\QueueBundle\Tests\StubTask')
+        $task = $this->getMockBuilder(StubTask::class)
             ->setConstructorArgs([['some data'], $entity])
             ->setMethods(['execute'])->getMock();
 
@@ -262,13 +271,14 @@ class TaskQueueServiceTest extends \PHPUnit_Framework_TestCase
             });
 
         $expectedEntity = clone $entity;
+        $datetime = $this->getDatetime();
         $expectedEntity->setState($entity::STATE_FAIL)
             ->setFinishedAt(new \NoMSDateTime())
-            ->setLog('[info]: Some output
+            ->setLog(sprintf('%s [info]: Some output
 ---
-[error]: [Released\QueueBundle\Exception\TaskExecutionException]: Some exception raised
+%s [error]: [Released\QueueBundle\Exception\TaskExecutionException]: Some exception raised
 ---
-');
+', $datetime, $datetime));
 
         $repository->expects($this->once())
             ->method('saveQueuedTask')->with($expectedEntity);
@@ -344,6 +354,14 @@ class TaskQueueServiceTest extends \PHPUnit_Framework_TestCase
             ->setMethods(['saveQueuedTask', 'setTaskStarted', 'setTaskFinished', 'getQueuedTasksForRun', 'updateDependTasks'])
             ->disableOriginalConstructor()->getMock();
         return $repository;
+    }
+
+    /**
+     * @return false|string
+     */
+    protected function getDatetime()
+    {
+        return date('Y-m-d H:i:s');
     }
 
 }

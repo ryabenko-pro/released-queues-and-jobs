@@ -10,13 +10,15 @@ class ConfigQueuedTaskType
     protected $className;
     protected $priority;
     protected $isLocal;
+    protected $retryLimit;
 
-    function __construct($name, $className, $priority, $isLocal = false)
+    function __construct($name, $className, $priority, $isLocal = false, $retry = 1)
     {
         $this->name = $name;
         $this->className = $className;
         $this->priority = $priority;
         $this->isLocal = $isLocal;
+        $this->retryLimit = $retry;
     }
 
     /**
@@ -49,5 +51,13 @@ class ConfigQueuedTaskType
     public function isLocal()
     {
         return $this->isLocal;
+    }
+
+    /**
+     * @return int
+     */
+    public function getRetryLimit()
+    {
+        return $this->retryLimit;
     }
 }
