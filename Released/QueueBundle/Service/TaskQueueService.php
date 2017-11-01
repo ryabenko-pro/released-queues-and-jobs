@@ -190,12 +190,12 @@ class TaskQueueService implements TaskExecutorInterface, TaskLoggerInterface
         return $task;
     }
 
-    public function runTasks($types = null)
+    public function runTasks($types = null, $noTypes = null)
     {
         /** @var BaseTask[] $tasks */
         $tasks = [];
 
-        $entities = $this->queuedTaskRepository->getQueuedTasksForRun($types, $this->serverId);
+        $entities = $this->queuedTaskRepository->getQueuedTasksForRun($types, $noTypes, $this->serverId);
         foreach ($entities as $entity) {
             $tasks[] = $this->mapEntityToTask($entity);
         }

@@ -51,11 +51,12 @@ class QueuedTaskRepository extends EntityRepository
 
     /**
      * @param string[]|null $types If set - select only tasks on this types
+     * @param string[]|null $noTypes If set - exclude tasks from select
      * @param null $serverId
      * @param int $limit
      * @return QueuedTask[]
      */
-    public function getQueuedTasksForRun($types = null, $serverId = null, $limit = self::RUN_TASKS_LIMIT)
+    public function getQueuedTasksForRun($types = null, $noTypes = null, $serverId = null, $limit = self::RUN_TASKS_LIMIT)
     {
         $em = $this->getEntityManager();
 
@@ -71,6 +72,11 @@ class QueuedTaskRepository extends EntityRepository
         if (!is_null($types) && !empty($types)) {
             $qb->andWhere('qt.type IN (:types)')
                 ->setParameter('types', (array)$types);
+        }
+
+        if (!is_null($noTypes) && !empty($noTypes)) {
+            $qb->andWhere('qt.type NOT IN (:no_types)')
+                ->setParameter('no_types', (array)$noTypes);
         }
 
         if (!is_null($serverId)) {

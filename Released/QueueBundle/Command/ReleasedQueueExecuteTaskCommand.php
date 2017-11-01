@@ -24,6 +24,7 @@ class ReleasedQueueExecuteTaskCommand extends BaseSingleCommand
             ->setDescription("Execute queued tasks. May be started in parallel several instances.")
             ->addOption("with", "w", InputOption::VALUE_IS_ARRAY|InputOption::VALUE_OPTIONAL, "You can pass some string parameters to container in format 'name:value', just `name` is same like `name:true`. You can not override existing parameters!")
             ->addOption("type", "t", InputOption::VALUE_IS_ARRAY|InputOption::VALUE_OPTIONAL, "If present only execute tasks of this types.")
+            ->addOption("no-type", "s", InputOption::VALUE_IS_ARRAY|InputOption::VALUE_OPTIONAL, "If present exclude tasks of this types.")
             ->addArgument('ids', InputArgument::OPTIONAL|InputArgument::IS_ARRAY, 'Run tasks with specific id, regardless ist state.');
     }
 
@@ -63,7 +64,8 @@ class ReleasedQueueExecuteTaskCommand extends BaseSingleCommand
 
         if (empty($ids)) {
             $types = $input->getOption('type');
-            $this->service->runTasks($types);
+            $noTypes = $input->getOption('no-type');
+            $this->service->runTasks($types, $noTypes);
         } else {
             if ($input->getOption('permanent')) {
                 throw new \Exception("Ids can not be used with 'permanent' option");
