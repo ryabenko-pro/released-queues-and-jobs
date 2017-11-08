@@ -22,6 +22,7 @@ class Configuration implements ConfigurationInterface
 
         $types = $rootNode->children()
                 ->scalarNode("template")->defaultValue("ReleasedJobsBundle::base.html.twig")->end()
+                // TODO: EM must be just "default"
                 ->scalarNode("em")->defaultValue("doctrine.orm.default_entity_manager")->end()
                 ->arrayNode("types")->requiresAtLeastOneElement()->prototype('array')
                     ->children()

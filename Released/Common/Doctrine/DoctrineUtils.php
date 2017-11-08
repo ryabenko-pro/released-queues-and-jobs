@@ -21,7 +21,7 @@ class DoctrineUtils
     public function __construct(Registry $doctrine, $name = null, LoggerInterface $logger = null)
     {
         $this->doctrine = $doctrine;
-        $this->name = $name;
+        $this->name = $this->cleanEmName($name);
         $this->logger = $logger;
     }
 
@@ -70,6 +70,19 @@ class DoctrineUtils
         }
 
         return $em;
+    }
+
+    /**
+     * @param $name
+     * @return mixed
+     */
+    protected function cleanEmName($name)
+    {
+        if (preg_match("/doctrine.orm.(\w+)_entity_manager/", $name, $matches)) {
+            return $matches[1];
+        }
+
+        return $name;
     }
 
 
