@@ -32,7 +32,7 @@ services:
   released.jobs.doctrine_utils:
     lazy: true
     class: Released\Common\Doctrine\DoctrineUtils
-    arguments: ['@doctrine', ~, "@=parameter('released_jobs.entity_manager')"]
+    arguments: ['@doctrine', "@=parameter('released_jobs.entity_manager')", "@logger"]
 
   job_persistence.service:
     class: Released\JobsBundle\Service\Persistence\JobPersistenceService
