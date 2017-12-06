@@ -20,6 +20,9 @@ abstract class BaseSingleCommand extends ContainerAwareCommand
     protected $memoryLimit;
     protected $cyclesLimit;
 
+    protected $timeLimit;
+    protected $startedAt;
+
     /**
      * Delay in seconds between last and current cycles start
      */
@@ -38,6 +41,7 @@ abstract class BaseSingleCommand extends ContainerAwareCommand
             ->addOption("pid-dir", null, InputOption::VALUE_OPTIONAL, "Directory name to store pid files.", null)
             ->addOption("cycle-delay", null, InputOption::VALUE_OPTIONAL, "Delay between cycles in seconds.", 1)
             ->addOption("memory-limit", null, InputOption::VALUE_OPTIONAL, "Task will gentle exit when limit reached.")
+            ->addOption("time-limit", null, InputOption::VALUE_OPTIONAL, "Task will gentle exit after working provided amount of seconds.")
             ->addOption("cycles-limit", null, InputOption::VALUE_OPTIONAL, "Task will gentle exit after cycles done.", 10000);
     }
 
@@ -70,6 +74,9 @@ abstract class BaseSingleCommand extends ContainerAwareCommand
         $this->cyclesLimit = intval($input->getOption('cycles-limit'));
         $this->cycleDelay = intval($input->getOption('cycle-delay'));
 
+        $this->timeLimit = intval($input->getOption('time-limit'));
+        $this->startedAt = time();
+
         $this->beforeStart($input, $output);
 
         $lastStartTs = time();
@@ -80,13 +87,13 @@ abstract class BaseSingleCommand extends ContainerAwareCommand
             return;
         }
 
-        do {
+        while ($this->canContinue()) {
             sleep(max(0, $this->cycleDelay - (time() - $lastStartTs)));
 
             $lastStartTs = time();
             $this->doExecute($input, $output);
             $this->cycles++;
-        } while ($this->canContinue());
+        };
     }
 
     /**
@@ -145,13 +152,17 @@ abstract class BaseSingleCommand extends ContainerAwareCommand
     /**
      * @return bool
      */
-    private function canContinue()
+    final protected function canContinue()
     {
         if ($this->cycles >= $this->cyclesLimit) {
             return false;
         }
 
         if (!is_null($this->memoryLimit) && memory_get_usage(true) > $this->memoryLimit) {
+            return false;
+        }
+
+        if (!is_null($this->timeLimit) && time() > $this->startedAt + $this->timeLimit) {
             return false;
         }
 
