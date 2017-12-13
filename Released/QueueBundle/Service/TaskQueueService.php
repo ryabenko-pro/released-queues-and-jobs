@@ -4,6 +4,8 @@
 namespace Released\QueueBundle\Service;
 
 
+use Doctrine\Common\Util\Debug;
+use Doctrine\ORM\EntityManager;
 use PHPUnit\Framework\ExpectationFailedException;
 use Released\QueueBundle\DependencyInjection\Util\ConfigQueuedTaskType;
 use Released\QueueBundle\Entity\QueuedTask;

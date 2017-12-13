@@ -3,6 +3,7 @@
 namespace Released\Common\Command;
 
 
+use Doctrine\ORM\EntityManager;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -27,7 +28,6 @@ abstract class BaseSingleCommand extends ContainerAwareCommand
      * Delay in seconds between last and current cycles start
      */
     protected $cycleDelay;
-    protected $needToCheckStopFile = true;
 
     /** @var InputInterface */
     protected $input;
@@ -59,7 +59,7 @@ abstract class BaseSingleCommand extends ContainerAwareCommand
             return;
         }
 
-        if ($this->isNeedToCheckStopFile() && $this->isStopFileExists()) {
+        if ($this->isStopFileExists()) {
             $output->writeln("Stop file is present. Exiting.");
 
             return;
@@ -87,12 +87,22 @@ abstract class BaseSingleCommand extends ContainerAwareCommand
             return;
         }
 
+        /** @var EntityManager $em */
+        $em = $this->getContainer()->get('doctrine')->getManager();
+        $uow = $em->getUnitOfWork();
+
         while ($this->canContinue()) {
             sleep(max(0, $this->cycleDelay - (time() - $lastStartTs)));
 
             $lastStartTs = time();
             $this->doExecute($input, $output);
             $this->cycles++;
+
+            foreach ($uow->getIdentityMap() as $class) {
+                foreach ($class as $entity) {
+                    $em->detach($entity);
+                }
+            }
         };
     }
 
@@ -154,7 +164,7 @@ abstract class BaseSingleCommand extends ContainerAwareCommand
      */
     final protected function canContinue()
     {
-        if ($this->cycles >= $this->cyclesLimit) {
+        if ($this->cycles > $this->cyclesLimit) {
             return false;
         }
 
@@ -162,7 +172,7 @@ abstract class BaseSingleCommand extends ContainerAwareCommand
             return false;
         }
 
-        if (!is_null($this->timeLimit) && time() > $this->startedAt + $this->timeLimit) {
+        if ($this->timeLimit > 0 && time() > $this->startedAt + $this->timeLimit) {
             return false;
         }
 
@@ -226,8 +236,4 @@ abstract class BaseSingleCommand extends ContainerAwareCommand
         }
     }
 
-    protected function isNeedToCheckStopFile()
-    {
-        return $this->needToCheckStopFile;
-    }
 }
