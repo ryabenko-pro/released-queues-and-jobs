@@ -79,23 +79,19 @@ abstract class BaseSingleCommand extends ContainerAwareCommand
 
         $this->beforeStart($input, $output);
 
-        $lastStartTs = time();
-        $this->doExecute($input, $output);
-        $this->cycles++;
-
-        if (!$input->getOption("permanent")) {
-            return;
-        }
+        $isPermanent = $input->getOption("permanent");
 
         /** @var EntityManager $em */
         $em = $this->getContainer()->get('doctrine')->getManager();
         $uow = $em->getUnitOfWork();
 
-        while ($this->canContinue()) {
+        $lastStartTs = time();
+        do {
             sleep(max(0, $this->cycleDelay - (time() - $lastStartTs)));
 
             $lastStartTs = time();
-            $this->doExecute($input, $output);
+            $result = $this->doExecute($input, $output);
+
             $this->cycles++;
 
             foreach ($uow->getIdentityMap() as $class) {
@@ -103,7 +99,12 @@ abstract class BaseSingleCommand extends ContainerAwareCommand
                     $em->detach($entity);
                 }
             }
-        };
+
+            if ($result === false) {
+                echo "EXIT";
+                return;
+            }
+        } while ($isPermanent && $this->canContinue());
     }
 
     /**

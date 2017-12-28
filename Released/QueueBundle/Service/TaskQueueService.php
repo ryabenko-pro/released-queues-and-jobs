@@ -11,6 +11,7 @@ use Released\QueueBundle\Exception\TaskAddException;
 use Released\QueueBundle\Exception\TaskRetryException;
 use Released\QueueBundle\Model\BaseTask;
 use Released\QueueBundle\Repository\QueuedTaskRepository;
+use Released\QueueBundle\Service\Logger\TaskLoggerAggregate;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 
@@ -83,9 +84,10 @@ class TaskQueueService implements TaskExecutorInterface, TaskLoggerInterface
     /**
      * Execute task. Usually from background cron command.
      * @param BaseTask $task
+     * @param TaskLoggerInterface|null $logger
      * @return null|void
      */
-    public function executeTask(BaseTask $task)
+    public function executeTask(BaseTask $task, TaskLoggerInterface $logger = null)
     {
         $entity = $task->getEntity();
 
@@ -102,9 +104,11 @@ class TaskQueueService implements TaskExecutorInterface, TaskLoggerInterface
         }
         $this->queuedTaskRepository->setTaskStarted($entity, getmypid());
 
+        $logger = is_null($logger) ? $this : new TaskLoggerAggregate([$this, $logger]);
+
         try {
             ob_start();
-            $task->execute($this->container, $this);
+            $task->execute($this->container, $logger);
             $entity->setState($entity::STATE_DONE);
 
             $output = $this->catchOutput();
