@@ -1,17 +1,20 @@
 <?php
 
-namespace Released\QueueBundle\Service;
+namespace Released\QueueBundle\Service\Inline;
 
 use Released\QueueBundle\Entity\QueuedTask;
+use Released\QueueBundle\Exception\BCBreakException;
 use Released\QueueBundle\Model\BaseTask;
 use Psr\Log\LoggerInterface;
+use Released\QueueBundle\Service\EnqueuerInterface;
+use Released\QueueBundle\Service\TaskLoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * This class just runs task in the same thread as client code.
  * Good for dev env.
  */
-class TaskSimpleExecutorService implements TaskExecutorInterface, TaskLoggerInterface
+class InlineEnqueuerService implements EnqueuerInterface, TaskLoggerInterface
 {
 
     /** @var ContainerInterface */
@@ -35,25 +38,13 @@ class TaskSimpleExecutorService implements TaskExecutorInterface, TaskLoggerInte
      */
     public function addTask(BaseTask $task, BaseTask $parent = null)
     {
+        throw new BCBreakException('You must use {enqueue} method now.');
+    }
+
+    /** {@inheritdoc} */
+    public function enqueue(BaseTask $task)
+    {
         $task->beforeAdd($this->container, $this);
-        $entity = $task->getEntity();
-        if (!$entity instanceof QueuedTask) {
-            $task->execute($this->container, $this);
-
-            return null;
-        }
-
-        if ($entity->isCancelled()) {
-            $entity->addLog(sprintf('Task is cancelled. It cannot be executed anymore'));
-
-            return null;
-        }
-
-        if ($entity->isWaiting()) {
-            $entity->addLog(sprintf('Task is waiting. Skipping.'));
-
-            return null;
-        }
         $task->execute($this->container, $this);
 
         return null;

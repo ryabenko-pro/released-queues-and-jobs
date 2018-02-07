@@ -5,7 +5,7 @@ namespace Released\QueueBundle\Tests\Service;
 
 
 use Psr\Log\NullLogger;
-use Released\QueueBundle\Service\TaskSimpleExecutorService;
+use Released\QueueBundle\Service\Inline\InlineEnqueuerService;
 use Symfony\Component\DependencyInjection\Container;
 
 class TaskSimpleExecutorServiceTest extends \PHPUnit_Framework_TestCase
@@ -15,7 +15,7 @@ class TaskSimpleExecutorServiceTest extends \PHPUnit_Framework_TestCase
     {
         // GIVEN
         $container = new Container();
-        $executor = new TaskSimpleExecutorService($container, new NullLogger());
+        $executor = new InlineEnqueuerService($container, new NullLogger());
 
         // EXPECTED
         $task = $this->getMockBuilder('Released\QueueBundle\Tests\StubTask')
@@ -24,7 +24,7 @@ class TaskSimpleExecutorServiceTest extends \PHPUnit_Framework_TestCase
         $task->expects($this->once())->method('beforeAdd')->with($container);
         $task->expects($this->once())->method('execute')->with($container);
 
-        $executor->addTask($task);
+        $executor->enqueue($task);
     }
 
 }
