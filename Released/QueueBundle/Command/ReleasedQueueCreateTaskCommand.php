@@ -46,8 +46,8 @@ class ReleasedQueueCreateTaskCommand extends ContainerAwareCommand
 
         $task = new $class($data);
 
-        $service = $this->getContainer()->get('released.queue.task_queue.service_database');
-        $id = $service->addTask($task);
+        $service = $this->getContainer()->get('released.queue.task_queue.service');
+        $id = $service->enqueue($task);
 
         $output->writeln("Task #{$id} with type '{$typeName}' added.");
     }

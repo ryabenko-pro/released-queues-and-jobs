@@ -9,8 +9,8 @@ use Released\QueueBundle\Entity\QueuedTask;
 use Released\QueueBundle\Exception\TaskExecutionException;
 use Released\QueueBundle\Exception\TaskRetryException;
 use Released\QueueBundle\Repository\QueuedTaskRepository;
+use Released\QueueBundle\Service\Db\TaskQueueDbService;
 use Released\QueueBundle\Service\TaskLoggerInterface;
-use Released\QueueBundle\Service\TaskQueueService;
 use Released\QueueBundle\Tests\StubQueuedTask;
 use Released\QueueBundle\Tests\StubTask;
 use Symfony\Component\DependencyInjection\Container;
@@ -34,10 +34,10 @@ class TaskQueueServiceTest extends \PHPUnit_Framework_TestCase
             ->setMethods(['saveQueueTask', 'getQueuedTask', 'getQueuedTasksForRun', 'updateDependTasks'])
             ->disableOriginalConstructor()->getMock();
 
-        $service = new TaskQueueService($container, $repository, []);
+        $service = new TaskQueueDbService($container, $repository, []);
 
         // WHEN
-        $service->addTask($task);
+        $service->enqueue($task);
     }
 
     public function testShouldEnqueueTask()
@@ -62,10 +62,10 @@ class TaskQueueServiceTest extends \PHPUnit_Framework_TestCase
         $repository->expects($this->once())
             ->method('saveQueuedTask')->with($entity);
 
-        $service = new TaskQueueService($container, $repository, ['stub' => $type], 'not used id');
+        $service = new TaskQueueDbService($container, $repository, ['stub' => $type], 'not used id');
 
         // WHEN
-        $service->addTask($task);
+        $service->enqueue($task);
     }
 
     public function testShouldEnqueueLocalTask()
@@ -91,10 +91,10 @@ class TaskQueueServiceTest extends \PHPUnit_Framework_TestCase
         $repository->expects($this->once())
             ->method('saveQueuedTask')->with($entity);
 
-        $service = new TaskQueueService($container, $repository, ['stub' => $type], 'server_id');
+        $service = new TaskQueueDbService($container, $repository, ['stub' => $type], 'server_id');
 
         // WHEN
-        $service->addTask($task);
+        $service->enqueue($task);
     }
 
     public function testShouldExecuteTask()
@@ -144,7 +144,7 @@ class TaskQueueServiceTest extends \PHPUnit_Framework_TestCase
         $repository->expects($this->once())
             ->method('saveQueuedTask')->with($expectedEntity);
 
-        $service = new TaskQueueService($container, $repository, ['stub' => $type]);
+        $service = new TaskQueueDbService($container, $repository, ['stub' => $type]);
 
         // WHEN
         $service->executeTask($task);
@@ -192,7 +192,7 @@ class TaskQueueServiceTest extends \PHPUnit_Framework_TestCase
         $repository->expects($this->once())
             ->method('saveQueuedTask')->with($expectedEntity);
 
-        $service = new TaskQueueService($container, $repository, ['stub' => $type]);
+        $service = new TaskQueueDbService($container, $repository, ['stub' => $type]);
 
         // WHEN
         $service->executeTask($task);
@@ -239,7 +239,7 @@ class TaskQueueServiceTest extends \PHPUnit_Framework_TestCase
         $repository->expects($this->once())
             ->method('saveQueuedTask')->with($expectedEntity);
 
-        $service = new TaskQueueService($container, $repository, ['stub' => $type]);
+        $service = new TaskQueueDbService($container, $repository, ['stub' => $type]);
 
         // WHEN
         $service->executeTask($task);
@@ -283,7 +283,7 @@ class TaskQueueServiceTest extends \PHPUnit_Framework_TestCase
         $repository->expects($this->once())
             ->method('saveQueuedTask')->with($expectedEntity);
 
-        $service = new TaskQueueService($container, $repository, ['stub' => $type]);
+        $service = new TaskQueueDbService($container, $repository, ['stub' => $type]);
 
         // WHEN
         $service->executeTask($task);
@@ -298,7 +298,7 @@ class TaskQueueServiceTest extends \PHPUnit_Framework_TestCase
         $container = new Container();
         $repository = $this->getQueuedTypesRepositoryMock();
 
-        $service = new TaskQueueService($container, $repository, ['stub' => $type]);
+        $service = new TaskQueueDbService($container, $repository, ['stub' => $type]);
 
         // WHEN
         $task = $service->mapEntityToTask($entity);
@@ -320,7 +320,7 @@ class TaskQueueServiceTest extends \PHPUnit_Framework_TestCase
         $container = new Container();
         $repository = $this->getQueuedTypesRepositoryMock();
 
-        $service = new TaskQueueService($container, $repository, []);
+        $service = new TaskQueueDbService($container, $repository, []);
 
         // WHEN
         $service->mapEntityToTask($entity);
@@ -339,7 +339,7 @@ class TaskQueueServiceTest extends \PHPUnit_Framework_TestCase
         $container = new Container();
         $repository = $this->getQueuedTypesRepositoryMock();
 
-        $service = new TaskQueueService($container, $repository, ['stub' => $type]);
+        $service = new TaskQueueDbService($container, $repository, ['stub' => $type]);
 
         // WHEN
         $service->mapEntityToTask($entity);

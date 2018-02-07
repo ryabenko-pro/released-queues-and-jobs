@@ -1,7 +1,0 @@
-services:
-
-  released.queue.task_queue.service:
-    class: Released\QueueBundle\Service\TaskSimpleExecutorService
-    arguments:
-      - "@service_container"
-      - "@logger"

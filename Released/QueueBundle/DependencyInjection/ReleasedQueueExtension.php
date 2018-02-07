@@ -2,10 +2,12 @@
 
 namespace Released\QueueBundle\DependencyInjection;
 
-use Released\QueueBundle\DependencyInjection\Util\ConfigQueuedTaskType;
+use Released\QueueBundle\DependencyInjection\Pass\QueueServicePass;
+use RuntimeException;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Config\FileLocator;
+use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 use Symfony\Component\DependencyInjection\Loader;
 
@@ -26,6 +28,7 @@ class ReleasedQueueExtension extends Extension
 
         $this->checkLocalTasks($config);
 
+        $container->setParameter("released.queue.transport", $config['transport']);
         $container->setParameter("released.queue.task_types", $config['types']);
 
         $container->setParameter('released.queue.server_id', $config['server_id']);
@@ -35,9 +38,8 @@ class ReleasedQueueExtension extends Extension
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('services.yml');
 
-//        if ('prod' != $container->getParameter('kernel.environment')) {
-//            $loader->load('services_dev.yml');
-//        }
+        $transport = $this->getTransport($container->getParameter('released.queue.transport'));
+        $container->getDefinition('released.queue.task_queue.service')->setArguments([new Reference($transport)]);
     }
 
     /**
@@ -46,14 +48,30 @@ class ReleasedQueueExtension extends Extension
      */
     protected function checkLocalTasks($config)
     {
-        $types = $config['types'];
-
         if (empty($config['server_id'])) {
-            foreach ($types as $type) {
+            foreach ($config['types'] as $type) {
                 if ($type['local']) {
                     throw new InvalidConfigurationException("Parameter `server_id` must be set when a task have `local` option set.");
                 }
             }
         }
+    }
+    /**
+     * @param string $transport
+     * @return string
+     */
+    private function getTransport($transport)
+    {
+        switch (mb_strtolower($transport)) {
+            case 'db':
+                return 'released.queue.task_queue.service_database';
+            case 'inline':
+                return 'released.queue.task_queue.service_inline';
+            case 'amqp':
+                throw new RuntimeException("AMQP transport is being implemented");
+            default:
+                throw new RuntimeException("{$transport} is not yet implemented");
+        }
+
     }
 }
