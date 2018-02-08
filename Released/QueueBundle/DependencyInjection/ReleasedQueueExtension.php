@@ -29,6 +29,8 @@ class ReleasedQueueExtension extends Extension
         $this->checkLocalTasks($config);
 
         $container->setParameter("released.queue.transport", $config['transport']);
+        $container->setParameter("released.queue.amqp", $config['amqp']);
+        $container->setParameter("released.queue.amqp.exchange_prefix", $config['amqp']['exchange_prefix']);
         $container->setParameter("released.queue.task_types", $config['types']);
 
         $container->setParameter('released.queue.server_id', $config['server_id']);
@@ -37,9 +39,6 @@ class ReleasedQueueExtension extends Extension
 
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('services.yml');
-
-        $transport = $this->getTransport($container->getParameter('released.queue.transport'));
-        $container->getDefinition('released.queue.task_queue.service')->setArguments([new Reference($transport)]);
     }
 
     /**
@@ -55,23 +54,5 @@ class ReleasedQueueExtension extends Extension
                 }
             }
         }
-    }
-    /**
-     * @param string $transport
-     * @return string
-     */
-    private function getTransport($transport)
-    {
-        switch (mb_strtolower($transport)) {
-            case 'db':
-                return 'released.queue.task_queue.service_database';
-            case 'inline':
-                return 'released.queue.task_queue.service_inline';
-            case 'amqp':
-                throw new RuntimeException("AMQP transport is being implemented");
-            default:
-                throw new RuntimeException("{$transport} is not yet implemented");
-        }
-
     }
 }

@@ -24,7 +24,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class TaskQueueDbService implements EnqueuerInterface, TaskLoggerInterface
 {
-    const PARENT_TASK_CLASS = 'Released\QueueBundle\Model\BaseTask';
 
     /** @var ContainerInterface */
     protected $container;
@@ -187,8 +186,8 @@ class TaskQueueDbService implements EnqueuerInterface, TaskLoggerInterface
         $type = $this->getType($entity->getType());
 
         $class = $type->getClassName();
-        if (!is_subclass_of($class, self::PARENT_TASK_CLASS)) {
-            throw new TaskAddException("Task class '{$class}' must be subclass of " . self::PARENT_TASK_CLASS);
+        if (!is_subclass_of($class, BaseTask::class)) {
+            throw new TaskAddException("Task class '{$class}' must be subclass of " . BaseTask::class);
         }
 
         $task = new $class($entity->getData(), $entity);
@@ -196,6 +195,11 @@ class TaskQueueDbService implements EnqueuerInterface, TaskLoggerInterface
         return $task;
     }
 
+    /**
+     * @param string[]|null $types
+     * @param string[]|null $noTypes
+     * @throws \Exception
+     */
     public function runTasks($types = null, $noTypes = null)
     {
         /** @var BaseTask[] $tasks */

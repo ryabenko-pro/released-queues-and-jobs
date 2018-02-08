@@ -5,36 +5,47 @@ parameters:
 
 services:
 
-  released.queue_repository_factory:
-    public: false
-    class: Released\Common\Factory\RepositoryFactory
-    arguments:
-      - "@=service(parameter('released.queue.entity_manager'))"
+    released.queue_repository_factory:
+        public: false
+        class: Released\Common\Factory\RepositoryFactory
+        arguments:
+            - "@=service(parameter('released.queue.entity_manager'))"
 
-  released.queue.repository.queued_task:
-    class: Released\QueueBundle\Repository\QueuedTaskRepository
-    factory: ['@released.queue_repository_factory', getRepository]
-    arguments:
-      - Released\QueueBundle\Entity\QueuedTask
+    released.queue.repository.queued_task:
+        class: Released\QueueBundle\Repository\QueuedTaskRepository
+        factory: ['@released.queue_repository_factory', getRepository]
+        arguments:
+            - Released\QueueBundle\Entity\QueuedTask
 
-  released.queue.task_queue.service_inline:
-    class: Released\QueueBundle\Service\InlineEnqueuerService
-    lazy: true
-    public: false
-    arguments:
-      - "@service_container"
-      - "@logger"
+    released.queue.task_queue.service_inline:
+        class: Released\QueueBundle\Service\InlineEnqueuerService
+        lazy: true
+        public: false
+        arguments:
+            - "@service_container"
+            - "@logger"
 
-  released.queue.task_queue.service_database:
-    class: Released\QueueBundle\Service\Db\TaskQueueDbService
-    lazy: true
-    arguments:
-      - "@service_container"
-      - "@released.queue.repository.queued_task"
-      - "%released.queue.task_types%"
-      - '%released.queue.server_id%'
+    released.queue.task_queue.service_database:
+        class: Released\QueueBundle\Service\Db\TaskQueueDbService
+        lazy: true
+        arguments:
+            - "@service_container"
+            - "@released.queue.repository.queued_task"
+            - "%released.queue.task_types%"
+            - '%released.queue.server_id%'
 
-  released.queue.task_queue.service:
-    class: Released\QueueBundle\Service\TaskQueueService
-    arguments:
-        - null # to be replaced in QueueServicePass compiler pass
+    released.queue.task_queue.service:
+        class: Released\QueueBundle\Service\TaskQueueService
+        arguments:
+                - null # to be replaced in QueueServicePass compiler pass
+
+    released.queue.released_amqp_factory:
+        class: Released\QueueBundle\Service\Amqp\ReleasedAmqpFactory
+        public: false
+        arguments:
+            - '@old_sound_rabbit_mq.connection.default'
+            - '%released.queue.amqp.exchange_prefix%'
+
+    released.queue.task_queue.service_amqp:
+        class: Released\QueueBundle\Service\Amqp\TaskQueueAmqpEnqueuer
+        arguments: ['@released.queue.released_amqp_factory']
