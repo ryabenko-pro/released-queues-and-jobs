@@ -16,6 +16,9 @@ abstract class BaseTask
 
     protected $data;
 
+    /** @var BaseTask[] */
+    protected $next = [];
+
     /** @var QueuedTask */
     protected $entity;
 
@@ -63,6 +66,30 @@ abstract class BaseTask
         $this->entity
             ->addLog("Failed: '{$reason}'")
             ->setState(QueuedTask::STATE_FAIL);
+    }
+
+    public function hasNextTasks(): boolean
+    {
+        return count($this->next) > 0;
+    }
+
+    /**
+     * @return BaseTask[]
+     */
+    public function getNextTasks()
+    {
+        return $this->next;
+    }
+
+    /**
+     * @param BaseTask $next
+     * @return self
+     */
+    public function addNextTask(BaseTask $next)
+    {
+        $this->next[] = $next;
+
+        return $this;
     }
 
     /**

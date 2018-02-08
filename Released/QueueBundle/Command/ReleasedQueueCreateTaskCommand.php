@@ -3,7 +3,6 @@
 namespace Released\QueueBundle\Command;
 
 
-use Released\QueueBundle\DependencyInjection\Util\ConfigQueuedTaskType;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -17,7 +16,8 @@ class ReleasedQueueCreateTaskCommand extends ContainerAwareCommand
     protected function configure()
     {
         $this->setName("released:queue:create-task");
-        $this->addArgument("type", InputArgument::REQUIRED, "Task type")
+        $this
+            ->addArgument("type", InputArgument::REQUIRED, "Task type")
             ->addArgument("data", InputArgument::OPTIONAL, "Task data in json string (use quotes). Empty array by default.", '{}');
     }
 
@@ -29,7 +29,6 @@ class ReleasedQueueCreateTaskCommand extends ContainerAwareCommand
         $typeName = $input->getArgument('type');
         $data = (array)@json_decode($input->getArgument('data'));
 
-
         $types = $this->getContainer()->getParameter('released.queue.task_types');
 
         if (!isset($types[$typeName])) {
@@ -37,9 +36,8 @@ class ReleasedQueueCreateTaskCommand extends ContainerAwareCommand
         }
 
         $type = $types[$typeName];
-        $type = new ConfigQueuedTaskType($type['name'], $type['class_name'], $type['priority']);
 
-        $class = $type->getClassName();
+        $class = $type['class_name'];
         if (!is_subclass_of($class, self::BASE_TASK)) {
             throw new \Exception("Task class '{$class}' must be subclass of " . self::BASE_TASK);
         }
@@ -49,7 +47,12 @@ class ReleasedQueueCreateTaskCommand extends ContainerAwareCommand
         $service = $this->getContainer()->get('released.queue.task_queue.service');
         $id = $service->enqueue($task);
 
-        $output->writeln("Task #{$id} with type '{$typeName}' added.");
+        $output->writeln(sprintf(
+            "Task #%d with type '%s' added using transport %s.",
+            $id,
+            $typeName,
+            $this->getContainer()->getParameter('released.queue.transport')
+        ));
     }
 
 }

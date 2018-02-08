@@ -12,7 +12,7 @@ interface EnqueuerInterface
     /**
      * @deprecated If you need to add task with dependency add dependant task as "next" to parent
      * @see EnqueuerInterface::enqueue
-     * @see BaseTask::addNext
+     * @see BaseTask::addNextTask
      * Executes task. If $parent is present, do not execute $task until parent not finished
      *
      * @param BaseTask $task
