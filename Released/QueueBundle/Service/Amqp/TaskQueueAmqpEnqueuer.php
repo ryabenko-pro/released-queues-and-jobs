@@ -46,6 +46,7 @@ class TaskQueueAmqpEnqueuer implements EnqueuerInterface
     protected function buildPayload(BaseTask $task): array
     {
         $payload = [
+            'type' => $task->getType(),
             'data' => $task->getData(),
         ];
 

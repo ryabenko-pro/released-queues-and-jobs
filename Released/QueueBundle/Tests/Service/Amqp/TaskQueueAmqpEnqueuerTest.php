@@ -36,7 +36,7 @@ class TaskQueueAmqpEnqueuerTest extends TestCase
             ->with('stub')->willReturn($this->producer);
 
         $this->producer->expects($this->once())->method('publish')
-            ->with(serialize(['data' => ['some' => 'data']]));
+            ->with(serialize(['type' => 'stub', 'data' => ['some' => 'data']]));
 
         // WHEN
         $task = new StubTask(['some' => 'data']);
@@ -51,12 +51,14 @@ class TaskQueueAmqpEnqueuerTest extends TestCase
 
         $this->producer->expects($this->once())->method('publish')
             ->with(serialize([
+                'type' => 'stub',
                 'data' => ['parent' => 'task'],
                 'next' => [[
+                    'type' => 'stub',
                     'data' => ['some' => 'data'],
                     'next' => [
-                        ['data' => ['child' => 1]],
-                        ['data' => ['child' => 2]],
+                        ['type' => 'stub', 'data' => ['child' => 1]],
+                        ['type' => 'stub', 'data' => ['child' => 2]],
                     ]
                 ]]
             ]));

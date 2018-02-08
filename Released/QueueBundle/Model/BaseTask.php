@@ -68,7 +68,7 @@ abstract class BaseTask
             ->setState(QueuedTask::STATE_FAIL);
     }
 
-    public function hasNextTasks(): boolean
+    public function hasNextTasks(): bool
     {
         return count($this->next) > 0;
     }
