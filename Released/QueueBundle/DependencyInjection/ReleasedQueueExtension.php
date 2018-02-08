@@ -31,6 +31,8 @@ class ReleasedQueueExtension extends Extension
         $container->setParameter("released.queue.transport", $config['transport']);
         $container->setParameter("released.queue.amqp", $config['amqp']);
         $container->setParameter("released.queue.amqp.exchange_prefix", $config['amqp']['exchange_prefix']);
+        $container->setParameter("released.queue.amqp.exchange_options", $config['amqp']['exchange_options']);
+        $container->setParameter("released.queue.amqp.queue_options", $config['amqp']['queue_options']);
         $container->setParameter("released.queue.task_types", $config['types']);
 
         $container->setParameter('released.queue.server_id', $config['server_id']);

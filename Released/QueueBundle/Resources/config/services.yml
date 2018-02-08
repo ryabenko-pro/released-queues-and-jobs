@@ -44,8 +44,14 @@ services:
         public: false
         arguments:
             - '@old_sound_rabbit_mq.connection.default'
+            - '%released.queue.amqp.exchange_options%'
+            - '%released.queue.amqp.queue_options%'
             - '%released.queue.amqp.exchange_prefix%'
 
     released.queue.task_queue.service_amqp:
         class: Released\QueueBundle\Service\Amqp\TaskQueueAmqpEnqueuer
         arguments: ['@released.queue.released_amqp_factory']
+
+    released.queue.task_queue.service_amqp_executor:
+        class: Released\QueueBundle\Service\Amqp\TaskQueueAmqpExecutor
+        arguments: ['@released.queue.released_amqp_factory', '@service_container', '%released.queue.task_types%', '@logger']
