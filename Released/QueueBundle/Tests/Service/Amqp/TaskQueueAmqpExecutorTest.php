@@ -13,7 +13,8 @@ use Symfony\Component\DependencyInjection\Container;
 
 class TaskQueueAmqpExecutorTest extends TestCase
 {
-
+    /** @var ConfigQueuedTaskType[] */
+    protected $types = [];
     /** @var ReleasedAmqpFactory|MockObject */
     protected $factory;
     /** @var Container */
@@ -29,28 +30,18 @@ class TaskQueueAmqpExecutorTest extends TestCase
         $this->factory = $this->getMockBuilder(ReleasedAmqpFactory::class)->disableOriginalConstructor()->getMock();
         $this->container = new Container();
 
-        $types = [];
-        $types[] = new ConfigQueuedTaskType('stub', StubTask::class, 5);
-        $types[] = new ConfigQueuedTaskType('test', StubTask::class, 5);
+        $this->types[] = new ConfigQueuedTaskType('stub', StubTask::class, 5);
+        $this->types[] = new ConfigQueuedTaskType('test', StubTask::class, 5);
 
-        $this->executor = new TaskQueueAmqpExecutor($this->factory, $this->container, $types);
+        $this->executor = new TaskQueueAmqpExecutor($this->factory, $this->container, $this->types);
     }
 
     public function testShouldBindToExchanges()
     {
         // EXPECT
         $consumerStub = $this->getMockBuilder(Consumer::class)->disableOriginalConstructor()->getMock();
-        $this->factory->expects($this->at(0))->method('getConsumer')
-            ->with('stub')->willReturn($consumerStub);
-
-        $consumerStub->expects($this->once())->method('setCallback')
-            ->with($this->callback(function ($value) {
-                return is_callable($value);
-            }));
-
-        $consumerTest = $this->getMockBuilder(Consumer::class)->disableOriginalConstructor()->getMock();
-        $this->factory->expects($this->at(1))->method('getConsumer')
-            ->with('test')->willReturn($consumerTest);
+        $this->factory->expects($this->once())->method('getConsumer')
+            ->with($this->types)->willReturn($consumerStub);
 
         $consumerStub->expects($this->once())->method('setCallback')
             ->with($this->callback(function ($value) {
@@ -66,7 +57,7 @@ class TaskQueueAmqpExecutorTest extends TestCase
         // EXPECT
         $consumerStub = $this->getMockBuilder(Consumer::class)->disableOriginalConstructor()->getMock();
         $this->factory->expects($this->once())->method('getConsumer')
-            ->with('stub')->willReturn($consumerStub);
+            ->with([$this->types[0]])->willReturn($consumerStub);
 
         // WHEN
         $this->executor->runTasks(['stub']);
@@ -76,7 +67,7 @@ class TaskQueueAmqpExecutorTest extends TestCase
         // EXPECT
         $consumerStub = $this->getMockBuilder(Consumer::class)->disableOriginalConstructor()->getMock();
         $this->factory->expects($this->once())->method('getConsumer')
-            ->with('test')->willReturn($consumerStub);
+            ->with([$this->types[1]])->willReturn($consumerStub);
 
         // WHEN
         $this->executor->runTasks(null, ['stub']);
@@ -88,7 +79,7 @@ class TaskQueueAmqpExecutorTest extends TestCase
         // EXPECT
         $consumerStub = $this->getMockBuilder(Consumer::class)->disableOriginalConstructor()->getMock();
         $this->factory->expects($this->once())->method('getConsumer')
-            ->with('stub')->willReturn($consumerStub);
+            ->with([$this->types[0]])->willReturn($consumerStub);
 
         // WHEN
         $this->executor->runTasks(['stub']);

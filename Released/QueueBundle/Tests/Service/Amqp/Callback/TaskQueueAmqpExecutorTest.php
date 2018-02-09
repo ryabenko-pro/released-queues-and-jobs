@@ -40,18 +40,18 @@ class TaskQueueAmqpExecutorTest extends TestCase
 
         $this->container = new Container();
 
-        $this->message = $this->createMessage(['data' => ['some' => 'data']]);
+        $this->message = $this->createMessage(['type' => 'test', 'data' => ['some' => 'data']]);
         $this->type = new ConfigQueuedTaskType('test', TrackedStubTask::class, 5);
 
-        $this->executor = new TaskQueueAmqpExecutor($this->factory, $this->container, []);
+        $this->executor = new TaskQueueAmqpExecutor($this->factory, $this->container, ['test' => $this->type]);
         TrackedStubTask::$instances = [];
-        TrackedStubTask::addMethodReturns('getType', 'stub');
+        TrackedStubTask::addMethodReturns('getType', 'test');
     }
 
     public function testShouldCreateTask()
     {
         // WHEN
-        $this->executor->processMessage($this->type, $this->message);
+        $this->executor->processMessage($this->message);
 
         // Then
         $this->assertEquals(1, count(TrackedStubTask::$instances), "Exactly 1 task must be created");
@@ -64,7 +64,7 @@ class TaskQueueAmqpExecutorTest extends TestCase
     public function testShouldExecuteTask()
     {
         // WHEN
-        $this->executor->processMessage($this->type, $this->message);
+        $this->executor->processMessage($this->message);
 
         // Then
         $this->assertEquals(1, count(TrackedStubTask::$instances), "Exactly 1 task must be created");
@@ -78,7 +78,7 @@ class TaskQueueAmqpExecutorTest extends TestCase
         // WHEN
         TrackedStubTask::addMethodReturns('execute', false);
 
-        $result = $this->executor->processMessage($this->type, $this->message);
+        $result = $this->executor->processMessage($this->message);
 
         // THEN
         $this->assertFalse($result);
@@ -108,7 +108,7 @@ class TaskQueueAmqpExecutorTest extends TestCase
         TrackedStubTask::addMethodReturns('execute', true);
 
         $message = $this->createMessage([
-            'type' => 'stub',
+            'type' => 'test',
             'data' => ['any' => 'data'],
             'next' => [[
                 'type' => 'next1',
@@ -122,7 +122,7 @@ class TaskQueueAmqpExecutorTest extends TestCase
             ]]
         ]);
 
-        $result = $this->executor->processMessage($this->type, $message);
+        $result = $this->executor->processMessage($message);
 
 
         // THEN

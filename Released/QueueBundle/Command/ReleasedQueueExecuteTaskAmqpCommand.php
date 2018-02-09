@@ -20,6 +20,10 @@ class ReleasedQueueExecuteTaskAmqpCommand extends BaseReleasedQueueExecuteTaskCo
      */
     public function doExecute(InputInterface $input, OutputInterface $output)
     {
+        if ($input->getOption('permanent')) {
+            $output->writeln("Option `permanent` is ignored for amqp command");
+        }
+
         $verbose = $input->getOption('verbose');
         $logger = $verbose ? new TaskLoggerConsole($output) : null;
 
@@ -29,7 +33,7 @@ class ReleasedQueueExecuteTaskAmqpCommand extends BaseReleasedQueueExecuteTaskCo
         $noTypes = $input->getOption('no-type');
         $service->runTasks($types, $noTypes, $logger);
 
-        return true;
+        return false;
     }
 
 }

@@ -55,25 +55,67 @@ class ReleasedAmqpFactory
     }
 
     /**
-     * @param string $type
+     * @param ConfigQueuedTaskType[] $types
      * @return Consumer
      */
-    public function getConsumer(string $type): Consumer
+    public function getConsumer($types): Consumer
     {
-        $instance = new Consumer($this->conn);
+        $instance = new MultiExchangeConsumer($this->conn);
 
-        $instance->setExchangeOptions($this->getExchangeOptions($type));
+        $exchangeOptions = $instance->setExchangeOptions(array_merge(['name' => '', 'type' => 'direct'], $this->exchangeOptions));
 
-        $options = array_merge([
-            'passive' => false,
-            'durable' => true,
-            'exclusive' => true,
-            'auto_delete' => true,
-        ], $this->queueOptions);
+        foreach ($types as $type) {
+            $exchangeName = $this->getExchangeName($type->getName());
 
-        $options['name'] = sprintf('%s_%d', $this->getExchangeName($type), getmypid());
+            $queueOptions = $instance->setQueueOptions(array_merge([
+                'passive' => false,
+                'durable' => true,
+                'exclusive' => false,
+                'auto_delete' => true,
+            ], $this->queueOptions));
 
-        $instance->setQueueOptions($options);
+//            $queueName = sprintf('%s_%d', $this->exchangePrefix, getmypid());
+            $queueName = $exchangeName;
+            $instance->getChannel()->queue_declare(
+                $queueName,
+                $queueOptions['passive'],
+                $queueOptions['durable'],
+                $queueOptions['exclusive'],
+                $queueOptions['auto_delete'],
+                $queueOptions['nowait'],
+                $queueOptions['arguments'],
+                $queueOptions['ticket']
+            );
+
+            $instance->getChannel()->exchange_declare(
+                $exchangeName,
+                $exchangeOptions['type'],
+                $exchangeOptions['passive'],
+                $exchangeOptions['durable'],
+                $exchangeOptions['auto_delete'],
+                $exchangeOptions['internal'],
+                $exchangeOptions['nowait'],
+                $exchangeOptions['arguments'],
+                $exchangeOptions['ticket']
+            );
+
+            $instance->bind($queueName, $exchangeName);
+
+//            $instance->getChannel()->basic_consume($queueName, $instance->getConsumerTag(), false, false, false, false, array($instance, 'processMessage'));
+            $instance->getChannel()->basic_consume($queueName, '', false, false, false, false, array($instance, 'processMessage'));
+
+
+//            if (isset($this->queueOptions['routing_keys']) && count($this->queueOptions['routing_keys']) > 0) {
+//                foreach ($this->queueOptions['routing_keys'] as $routingKey) {
+//                    $this->queueBind($queueName, $this->exchangeOptions['name'], $routingKey);
+//                }
+//            } else {
+//            }
+        }
+
+//        $instance->getChannel()->basic_consume($queueName, $queueName, false, false, false, false, function (AMQPMessage $msg) use($queueName, $instance) {
+//            $instance->processMessage($msg);
+//        });
 
 /*
         if ($this->has('debug.event_dispatcher')) {
