@@ -4,23 +4,33 @@ namespace Released\QueueBundle\Tests\Service\Amqp;
 
 use OldSound\RabbitMqBundle\RabbitMq\Consumer;
 use OldSound\RabbitMqBundle\RabbitMq\Producer;
-use Released\QueueBundle\Service\Amqp\ReleasedAmqpFactory;
+use PhpAmqpLib\Channel\AMQPChannel;
+use PhpAmqpLib\Connection\AbstractConnection;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Released\QueueBundle\Tests\Stub\StubAmqpConnection;
+use Released\QueueBundle\DependencyInjection\Util\ConfigQueuedTaskType;
+use Released\QueueBundle\Service\Amqp\MultiExchangeConsumer;
+use Released\QueueBundle\Service\Amqp\ReleasedAmqpFactory;
+use Released\QueueBundle\Tests\StubTask;
 
 class ReleasedAmqpFactoryTest extends TestCase
 {
-    /** @var StubAmqpConnection */
+    /** @var AbstractConnection|MockObject */
     protected $connection;
     /** @var ReleasedAmqpFactory */
     protected $factory;
+    /** @var AMQPChannel|MockObject */
+    protected $channel;
 
     /**
      * @inheritDoc
      */
     protected function setUp()
     {
-        $this->connection = new StubAmqpConnection();
+        $this->connection = $this->getMockBuilder(AbstractConnection::class)->disableOriginalConstructor()->getMock();
+        $this->channel = $this->getMockBuilder(AMQPChannel::class)->disableOriginalConstructor()->getMock();
+        $this->connection->expects($this->any())->method('channel')->willReturn($this->channel);
+
         $this->factory = new ReleasedAmqpFactory($this->connection);
     }
 
@@ -42,23 +52,23 @@ class ReleasedAmqpFactoryTest extends TestCase
     public function testShouldCreateConsumer()
     {
         // WHEN
-        $producer = $this->factory->getConsumer('some.type_name');
+        $consumer = $this->factory->getConsumer([new ConfigQueuedTaskType('new.some_type', StubTask::class, 5)]);
 
         // THEN
-        $expected = new Consumer($this->connection);
+        $expected = new MultiExchangeConsumer($this->connection, $this->channel);
         $expected->setExchangeOptions([
-            'name' => 'released.some_type__name',
+            'name' => '',
             'type' => 'direct',
         ]);
         $expected->setQueueOptions([
-            'name' => 'released.some_type__name_' . getmypid(),
+            'name' => '',
             'passive' => false,
             'durable' => true,
-            'exclusive' => true,
+            'exclusive' => false,
             'auto_delete' => true,
         ]);
 
-        $this->assertEquals($expected, $producer);
+        $this->assertEquals($expected, $consumer);
     }
 
     public function testShouldApplyOptions()
@@ -70,24 +80,24 @@ class ReleasedAmqpFactoryTest extends TestCase
             ['queue_option' => '1', 'name' => 'not.relevant', 'passive' => true, 'durable' => false,],
             'prefix'
         );
-        $producer = $factory->getConsumer('some.type_name');
+        $consumer = $factory->getConsumer([new ConfigQueuedTaskType('new.some_type', StubTask::class, 5)]);
 
         // THEN
-        $expected = new Consumer($this->connection);
+        $expected = new MultiExchangeConsumer($this->connection, $this->channel);
         $expected->setExchangeOptions([
-            'name' => 'prefix.some_type__name',
-            'type' => 'direct',
+            'name' => 'not.relevant',
+            'type' => 'topic',
             'exchange_option' => '1',
         ]);
         $expected->setQueueOptions([
-            'name' => 'prefix.some_type__name_' . getmypid(),
+            'name' => 'not.relevant',
             'passive' => true,
             'durable' => false,
-            'exclusive' => true,
+            'exclusive' => false,
             'auto_delete' => true,
             'queue_option' => '1',
         ]);
 
-        $this->assertEquals($expected, $producer);
+        $this->assertEquals($expected, $consumer);
     }
 }

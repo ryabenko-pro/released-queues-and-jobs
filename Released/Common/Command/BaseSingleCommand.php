@@ -56,6 +56,8 @@ abstract class BaseSingleCommand extends ContainerAwareCommand
         $this->input = $input;
 
         if ($this->isInstanceRunning()) {
+            $output->writeln("Instance is already running. Exiting.");
+
             return;
         }
 
@@ -99,12 +101,7 @@ abstract class BaseSingleCommand extends ContainerAwareCommand
                     $em->detach($entity);
                 }
             }
-
-            if ($result === false) {
-                echo "EXIT";
-                return;
-            }
-        } while ($isPermanent && $this->canContinue());
+        } while ($isPermanent && $result !== false && $this->canContinue());
     }
 
     /**

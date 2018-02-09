@@ -48,20 +48,24 @@ class TaskQueueAmqpExecutor implements TaskLoggerInterface
             return $matches && !$blocks;
         });
 
-        foreach ($selectedTypes as $type) {
-            $consumer = $this->factory->getConsumer($type->getName());
+        $selectedTypes = array_values($selectedTypes);
 
-            $consumer->setCallback(function (AMQPMessage $message) use ($type, $logger) {
-                // Check for stop file and nack
-                return $this->processMessage($type, $message, $logger);
-            });
+        $consumer = $this->factory->getConsumer($selectedTypes);
 
-            $consumer->start();
-        }
+        $consumer->setCallback(function (AMQPMessage $message) use ($logger) {
+            // Check for stop file and nack
+            return $this->processMessage($message, $logger);
+        });
+
+        $consumer->start();
     }
 
-    public function processMessage(ConfigQueuedTaskType $type, AMQPMessage $message, TaskLoggerInterface $logger = null): bool
+    public function processMessage(AMQPMessage $message, TaskLoggerInterface $logger = null): bool
     {
+        $payload = unserialize($message->getBody());
+
+        $type = $this->types[$payload['type']];
+
         $logger = is_null($logger) ? $this : new TaskLoggerAggregate([$this, $logger]);
 
         // Create task
@@ -70,13 +74,11 @@ class TaskQueueAmqpExecutor implements TaskLoggerInterface
             throw new TaskAddException("Task class '{$class}' must be subclass of " . BaseTask::class);
         }
 
-        $payload = unserialize($message->getBody());
-
         /** @var BaseTask $task */
         $task = new $class($payload['data'] ?? []);
 
         // Execute task and nack if false
-        if (!$task->execute($this->container, $logger)) {
+        if (false === $task->execute($this->container, $logger)) {
             return false;
         }
 

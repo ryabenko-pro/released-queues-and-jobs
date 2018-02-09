@@ -36,6 +36,7 @@ flow goes like nothing happens.
 
 ```yaml
 released_queue:
+    transport: db # db / amqp / inline
     template: ::base.html.twig  # optional  
     doctrine.orm.default_entity_manager: default # optional
     server_id: (Optional unique server identifier - must be set if a task with `local` exist)
@@ -73,14 +74,15 @@ To run enqueued tasks you need to run command in console:
 
 ```console
 ./bin/console released:queue:execute-task --permanent --cycles-limit=10 --cycle-delay=5 --memory-limit=XXX --single-id=THREAD_ID
+./bin/console released:queue:execute-task-amqp --single-id=THREAD_ID
 ```
 
 Where:
 - `--permanent` do not exit command immediately but stay alive and wait for new tasks
-- `--cycles-limit` specify the cycles limit once reached task will exit. Keep in mind the **cycle** increased on every queue check 
+- `--cycles-limit` **(db only)** specify the cycles limit once reached task will exit. Keep in mind the **cycle** increased on every queue check 
 even if no task executed
-- `--cycle-delay` delay in seconds between queue check
-- `--memory-limit` memory limit in bytes once reached task will exit
+- `--cycle-delay` **(db only)** delay in seconds between queue check
+- `--memory-limit` **(db only, TODO amqp)** memory limit in bytes once reached task will exit
 - `--single-id` is used to run multiple tasks with the same name. More explained below.
 
 By default only one instance of this task can be run. Every time you run this command it will check for running command and exit if there is one.
