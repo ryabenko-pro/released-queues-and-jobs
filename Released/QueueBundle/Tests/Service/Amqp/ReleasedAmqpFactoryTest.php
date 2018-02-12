@@ -67,6 +67,7 @@ class ReleasedAmqpFactoryTest extends TestCase
             'exclusive' => false,
             'auto_delete' => true,
         ]);
+        $expected->addQueue('released.new_some__type');
 
         $this->assertEquals($expected, $consumer);
     }
@@ -97,6 +98,7 @@ class ReleasedAmqpFactoryTest extends TestCase
             'auto_delete' => true,
             'queue_option' => '1',
         ]);
+        $expected->addQueue('prefix.new_some__type');
 
         $this->assertEquals($expected, $consumer);
     }

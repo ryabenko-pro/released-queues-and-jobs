@@ -24,6 +24,9 @@ class TaskQueueAmqpExecutor implements TaskLoggerInterface
     /** @var LoggerInterface|null */
     protected $logger;
 
+    protected $messagesLimit = null;
+    protected $memoryLimit = null;
+
     function __construct(ReleasedAmqpFactory $factory, ContainerInterface $container, $types, LoggerInterface $logger = null)
     {
         $this->factory = $factory;
@@ -52,12 +55,16 @@ class TaskQueueAmqpExecutor implements TaskLoggerInterface
 
         $consumer = $this->factory->getConsumer($selectedTypes);
 
+        if (!is_null($this->memoryLimit)) {
+            $consumer->setMemoryLimit($this->memoryLimit);
+        }
+
         $consumer->setCallback(function (AMQPMessage $message) use ($logger) {
             // Check for stop file and nack
             return $this->processMessage($message, $logger);
         });
 
-        $consumer->start();
+        $consumer->start($this->messagesLimit);
     }
 
     public function processMessage(AMQPMessage $message, TaskLoggerInterface $logger = null): bool
@@ -121,4 +128,23 @@ class TaskQueueAmqpExecutor implements TaskLoggerInterface
         return $result;
     }
 
+    /**
+     * @param null $messagesLimit
+     * @return self
+     */
+    public function setMessagesLimit($messagesLimit)
+    {
+        $this->messagesLimit = $messagesLimit;
+        return $this;
+    }
+
+    /**
+     * @param null $memoryLimit
+     * @return self
+     */
+    public function setMemoryLimit($memoryLimit)
+    {
+        $this->memoryLimit = $memoryLimit;
+        return $this;
+    }
 }
