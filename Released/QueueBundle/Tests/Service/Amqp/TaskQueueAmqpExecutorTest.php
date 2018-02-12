@@ -2,9 +2,9 @@
 
 namespace Released\QueueBundle\Tests\Service\Amqp;
 
-use OldSound\RabbitMqBundle\RabbitMq\Consumer;
 use PHPUnit\Framework\MockObject\MockObject;
 use Released\QueueBundle\DependencyInjection\Util\ConfigQueuedTaskType;
+use Released\QueueBundle\Service\Amqp\MultiExchangeConsumer;
 use Released\QueueBundle\Service\Amqp\ReleasedAmqpFactory;
 use Released\QueueBundle\Service\Amqp\TaskQueueAmqpExecutor;
 use PHPUnit\Framework\TestCase;
@@ -39,7 +39,7 @@ class TaskQueueAmqpExecutorTest extends TestCase
     public function testShouldBindToExchanges()
     {
         // EXPECT
-        $consumerStub = $this->getMockBuilder(Consumer::class)->disableOriginalConstructor()->getMock();
+        $consumerStub = $this->getMockBuilder(MultiExchangeConsumer::class)->disableOriginalConstructor()->getMock();
         $this->factory->expects($this->once())->method('getConsumer')
             ->with($this->types)->willReturn($consumerStub);
 
@@ -55,7 +55,7 @@ class TaskQueueAmqpExecutorTest extends TestCase
     public function testShouldRunSelected()
     {
         // EXPECT
-        $consumerStub = $this->getMockBuilder(Consumer::class)->disableOriginalConstructor()->getMock();
+        $consumerStub = $this->getMockBuilder(MultiExchangeConsumer::class)->disableOriginalConstructor()->getMock();
         $this->factory->expects($this->once())->method('getConsumer')
             ->with([$this->types[0]])->willReturn($consumerStub);
 
@@ -65,7 +65,7 @@ class TaskQueueAmqpExecutorTest extends TestCase
     public function testShouldSkipSelected()
     {
         // EXPECT
-        $consumerStub = $this->getMockBuilder(Consumer::class)->disableOriginalConstructor()->getMock();
+        $consumerStub = $this->getMockBuilder(MultiExchangeConsumer::class)->disableOriginalConstructor()->getMock();
         $this->factory->expects($this->once())->method('getConsumer')
             ->with([$this->types[1]])->willReturn($consumerStub);
 
@@ -77,7 +77,7 @@ class TaskQueueAmqpExecutorTest extends TestCase
     public function testShouldRunTask()
     {
         // EXPECT
-        $consumerStub = $this->getMockBuilder(Consumer::class)->disableOriginalConstructor()->getMock();
+        $consumerStub = $this->getMockBuilder(MultiExchangeConsumer::class)->disableOriginalConstructor()->getMock();
         $this->factory->expects($this->once())->method('getConsumer')
             ->with([$this->types[0]])->willReturn($consumerStub);
 

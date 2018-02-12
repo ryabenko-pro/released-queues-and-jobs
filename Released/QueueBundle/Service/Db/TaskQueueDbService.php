@@ -60,6 +60,16 @@ class TaskQueueDbService implements EnqueuerInterface, TaskLoggerInterface
      */
     public function enqueue(BaseTask $task)
     {
+        return $this->doEnqueue($task);
+    }
+
+    /**
+     * @param BaseTask $task
+     * @param BaseTask|null $parent
+     * @return int
+     */
+    protected function doEnqueue(BaseTask $task, BaseTask $parent = null)
+    {
         $task->beforeAdd($this->container, $this);
 
         $typeName = $task->getType();
@@ -73,12 +83,23 @@ class TaskQueueDbService implements EnqueuerInterface, TaskLoggerInterface
         if ($type->isLocal()) {
             $entity->setServer($this->serverId);
         }
-        
+
         $entity->setScheduledAt($task->getScheduledAt());
 
         $task->setEntity($entity);
 
-        return $this->queuedTaskRepository->saveQueuedTask($entity);
+        $this->queuedTaskRepository->saveQueuedTask($entity);
+        if (!is_null($parent)) {
+            $entity->setParent($parent->getEntity()->getId());
+        }
+
+        if ($task->hasNextTasks()) {
+            foreach ($task->getNextTasks() as $nextTask) {
+                $this->doEnqueue($nextTask, $task);
+            }
+        }
+
+        return $entity->getId();
     }
 
     /**

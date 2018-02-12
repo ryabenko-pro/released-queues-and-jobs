@@ -24,6 +24,10 @@ class ReleasedQueueExecuteTaskAmqpCommand extends BaseReleasedQueueExecuteTaskCo
             $output->writeln("Option `permanent` is ignored for amqp command");
         }
 
+        if ($input->getOption('time-limit')) {
+            $output->writeln("Option `time-limit` is ignored for amqp command");
+        }
+
         $verbose = $input->getOption('verbose');
         $logger = $verbose ? new TaskLoggerConsole($output) : null;
 
@@ -31,6 +35,17 @@ class ReleasedQueueExecuteTaskAmqpCommand extends BaseReleasedQueueExecuteTaskCo
 
         $types = $input->getOption('type');
         $noTypes = $input->getOption('no-type');
+
+        $memory = $input->getOption("memory-limit");
+        if (!is_null($memory)) {
+            $service->setMemoryLimit(intval($memory) / (1024 * 1024));
+        }
+
+        $messages = $input->getOption("cycles-limit");
+        if (!is_null($messages)) {
+            $service->setMessagesLimit(intval($messages));
+        }
+
         $service->runTasks($types, $noTypes, $logger);
 
         return false;

@@ -18,7 +18,7 @@ abstract class BaseSingleCommand extends ContainerAwareCommand
 
     protected $cycles = 1;
 
-    protected $memoryLimit;
+    private $memoryLimit;
     protected $cyclesLimit;
 
     protected $timeLimit;
@@ -40,9 +40,9 @@ abstract class BaseSingleCommand extends ContainerAwareCommand
             ->addOption("permanent", "p", InputOption::VALUE_NONE, "Should this task do cycles. If not present it will be run only once, as usual command.")
             ->addOption("pid-dir", null, InputOption::VALUE_OPTIONAL, "Directory name to store pid files.", null)
             ->addOption("cycle-delay", null, InputOption::VALUE_OPTIONAL, "Delay between cycles in seconds.", 1)
-            ->addOption("memory-limit", null, InputOption::VALUE_OPTIONAL, "Task will gentle exit when limit reached.")
+            ->addOption("memory-limit", null, InputOption::VALUE_OPTIONAL, "(In MB) Task will gentle exit when limit reached.")
             ->addOption("time-limit", null, InputOption::VALUE_OPTIONAL, "Task will gentle exit after working provided amount of seconds.")
-            ->addOption("cycles-limit", null, InputOption::VALUE_OPTIONAL, "Task will gentle exit after cycles done.", 10000);
+            ->addOption("cycles-limit", null, InputOption::VALUE_OPTIONAL, "Task will gentle exit after this amount of cycles is done.", 10000);
     }
 
     /**
@@ -72,7 +72,8 @@ abstract class BaseSingleCommand extends ContainerAwareCommand
             throw new \Exception("Can't write pid file '{$pidFilename}'");
         }
 
-        $this->memoryLimit = $input->getOption('memory-limit');
+        // Convert MBs to bytes to work with `memory_get_usage` function
+        $this->memoryLimit = $input->getOption('memory-limit') * 1024 * 1024;
         $this->cyclesLimit = intval($input->getOption('cycles-limit'));
         $this->cycleDelay = intval($input->getOption('cycle-delay'));
 
