@@ -2,7 +2,6 @@
 
 namespace Released\QueueBundle\Tests\Service\Amqp;
 
-use OldSound\RabbitMqBundle\RabbitMq\Consumer;
 use OldSound\RabbitMqBundle\RabbitMq\Producer;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AbstractConnection;
@@ -65,7 +64,7 @@ class ReleasedAmqpFactoryTest extends TestCase
             'passive' => false,
             'durable' => true,
             'exclusive' => false,
-            'auto_delete' => true,
+            'auto_delete' => false,
         ]);
         $expected->addQueue('released.new_some__type');
 
@@ -95,7 +94,7 @@ class ReleasedAmqpFactoryTest extends TestCase
             'passive' => true,
             'durable' => false,
             'exclusive' => false,
-            'auto_delete' => true,
+            'auto_delete' => false,
             'queue_option' => '1',
         ]);
         $expected->addQueue('prefix.new_some__type');

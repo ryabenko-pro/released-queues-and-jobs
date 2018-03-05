@@ -22,6 +22,8 @@ class ReleasedAmqpFactory
     protected $queueOptions;
     /** @var array */
     protected $exchangeOptions;
+    /** @var ProducerInterface[] */
+    protected $producers = [];
 
     public function __construct(AbstractConnection $conn, $exchangeOptions = [], $queueOptions = [], $exchangePrefix = 'released')
     {
@@ -37,11 +39,15 @@ class ReleasedAmqpFactory
      */
     public function getProducer(string $type): ProducerInterface
     {
-        $producer = new Producer($this->conn);
+        if (!isset($this->producers[$type])) {
+            $producer = new Producer($this->conn);
 
-        $producer->setExchangeOptions($this->getExchangeOptions($type));
+            $producer->setExchangeOptions($this->getExchangeOptions($type));
 
-        return $producer;
+            $this->producers[$type] = $producer;
+        }
+
+        return $this->producers[$type];
     }
 
     /**
@@ -61,7 +67,7 @@ class ReleasedAmqpFactory
             'passive' => false,
             'durable' => true,
             'exclusive' => false,
-            'auto_delete' => true,
+            'auto_delete' => false,
         ], $this->queueOptions));
 
         foreach ($types as $type) {

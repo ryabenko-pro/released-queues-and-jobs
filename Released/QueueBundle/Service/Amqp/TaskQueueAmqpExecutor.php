@@ -2,6 +2,7 @@
 
 namespace Released\QueueBundle\Service\Amqp;
 
+use Monolog\Logger;
 use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerInterface;
 use Released\QueueBundle\DependencyInjection\Util\ConfigQueuedTaskType;
@@ -102,8 +103,10 @@ class TaskQueueAmqpExecutor implements TaskLoggerInterface
     }
 
     /** {@inheritdoc} */
-    public function log(BaseTask $task, $message, $type = self::LOG_MESSAGE)
+    public function log(BaseTask $task, $message, $type = Logger::INFO)
     {
+        $type = $this->getLogLevel($type);
+
         if (!is_null($this->logger)) {
             $this->logger->log($type, $message, ['task_type' => $task->getType()]);
         }
@@ -146,5 +149,24 @@ class TaskQueueAmqpExecutor implements TaskLoggerInterface
     {
         $this->memoryLimit = $memoryLimit;
         return $this;
+    }
+
+    private function getLogLevel($type)
+    {
+        if (is_numeric($type)) {
+            return $type;
+        }
+
+        switch ($type) {
+            case self::LOG_ERROR:
+                return Logger::ERROR;
+            case self::LOG_MESSAGE:
+                return Logger::INFO;
+            case self::LOG_NOTICE:
+                return Logger::DEBUG;
+
+            default:
+                return Logger::INFO;
+        }
     }
 }
