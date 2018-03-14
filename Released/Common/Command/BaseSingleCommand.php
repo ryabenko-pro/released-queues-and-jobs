@@ -73,7 +73,9 @@ abstract class BaseSingleCommand extends ContainerAwareCommand
         }
 
         // Convert MBs to bytes to work with `memory_get_usage` function
-        $this->memoryLimit = $input->getOption('memory-limit') * 1024 * 1024;
+        $memLimit = $input->getOption('memory-limit');
+        $this->memoryLimit = is_null($memLimit) ? null : $memLimit * 1024 * 1024;
+
         $this->cyclesLimit = intval($input->getOption('cycles-limit'));
         $this->cycleDelay = intval($input->getOption('cycle-delay'));
 
