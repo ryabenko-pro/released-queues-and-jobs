@@ -24,6 +24,8 @@ class ReleasedAmqpFactory
     protected $exchangeOptions;
     /** @var ProducerInterface[] */
     protected $producers = [];
+    /** @var string|null */
+    protected $serverId;
 
     public function __construct(AbstractConnection $conn, $exchangeOptions = [], $queueOptions = [], $exchangePrefix = 'released')
     {
@@ -35,14 +37,15 @@ class ReleasedAmqpFactory
 
     /**
      * @param string $type
+     * @param bool $isLocal
      * @return ProducerInterface
      */
-    public function getProducer(string $type): ProducerInterface
+    public function getProducer(string $type, $isLocal = false): ProducerInterface
     {
         if (!isset($this->producers[$type])) {
             $producer = new Producer($this->conn);
 
-            $producer->setExchangeOptions($this->getExchangeOptions($type));
+            $producer->setExchangeOptions($this->getExchangeOptions($type, $isLocal));
 
             $this->producers[$type] = $producer;
         }
@@ -71,7 +74,7 @@ class ReleasedAmqpFactory
         ], $this->queueOptions));
 
         foreach ($types as $type) {
-            $exchangeName = $this->getExchangeName($type->getName());
+            $exchangeName = $this->getExchangeName($type->getName(), $type->isLocal());
 
             $queueName = $exchangeName;
             $instance->addQueue($queueName);
@@ -85,25 +88,36 @@ class ReleasedAmqpFactory
 
     /**
      * @param string $type
+     * @param bool $isLocal
      * @return string
      */
-    protected function getExchangeName(string $type): string
+    protected function getExchangeName(string $type, $isLocal = false): string
     {
         $type = strtr($type, ['_' => '__', '.' => '_']);
 
-        return sprintf('%s.%s', $this->exchangePrefix, $type);
+        return sprintf('%s.%s%s', $this->exchangePrefix, $type, $isLocal ? '.' . $this->serverId : '');
     }
 
     /**
      * @param string $type
+     * @param bool $isLocal
      * @return array
      */
-    protected function getExchangeOptions(string $type): array
+    protected function getExchangeOptions(string $type, $isLocal = false): array
     {
         return array_merge($this->exchangeOptions, [
-            'name' => $this->getExchangeName($type),
+            'name' => $this->getExchangeName($type, $isLocal),
             'type' => 'direct',
         ]);
     }
 
+    /**
+     * @param string $serverId
+     * @return self
+     */
+    public function setServerId($serverId)
+    {
+        $this->serverId = $serverId;
+        return $this;
+    }
 }
