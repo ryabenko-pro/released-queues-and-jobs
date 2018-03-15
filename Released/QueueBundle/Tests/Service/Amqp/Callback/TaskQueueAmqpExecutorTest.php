@@ -16,8 +16,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class TaskQueueAmqpExecutorTest extends TestCase
 {
 
-    /** @var ConfigQueuedTaskType */
-    protected $type;
+    /** @var ConfigQueuedTaskType[] */
+    protected $types;
     /** @var ContainerInterface */
     protected $container;
     /** @var AMQPMessage */
@@ -41,9 +41,12 @@ class TaskQueueAmqpExecutorTest extends TestCase
         $this->container = new Container();
 
         $this->message = $this->createMessage(['type' => 'test', 'data' => ['some' => 'data']]);
-        $this->type = new ConfigQueuedTaskType('test', TrackedStubTask::class, 5);
+        $this->types['test'] = new ConfigQueuedTaskType('test', TrackedStubTask::class, 5);
+        $this->types['next1'] = new ConfigQueuedTaskType('next1', TrackedStubTask::class, 5);
+        $this->types['next2'] = new ConfigQueuedTaskType('next2', TrackedStubTask::class, 5);
+        $this->types['next3'] = new ConfigQueuedTaskType('next3', TrackedStubTask::class, 5);
 
-        $this->executor = new TaskQueueAmqpExecutor($this->factory, $this->container, ['test' => $this->type]);
+        $this->executor = new TaskQueueAmqpExecutor($this->factory, $this->container, $this->types);
         TrackedStubTask::$instances = [];
         TrackedStubTask::addMethodReturns('getType', 'test');
     }
@@ -86,8 +89,8 @@ class TaskQueueAmqpExecutorTest extends TestCase
 
     public function testShouldProcessValidExecution()
     {
-        $this->factory->expects($this->at(0))->method('getProducer')->with('next1')->willReturn($this->producer);
-        $this->factory->expects($this->at(1))->method('getProducer')->with('next3')->willReturn($this->producer);
+        $this->factory->expects($this->at(0))->method('getProducer')->with($this->types['next1'])->willReturn($this->producer);
+        $this->factory->expects($this->at(1))->method('getProducer')->with($this->types['next3'])->willReturn($this->producer);
 
         // EXPECTS
         $this->producer->expects($this->at(0))->method('publish')->with(serialize([

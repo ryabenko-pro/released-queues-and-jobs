@@ -93,7 +93,7 @@ class TaskQueueAmqpExecutor implements TaskLoggerInterface
         // Enqueue next tasks
         if (isset($payload['next'])) {
             foreach ($payload['next'] as $nextPayload) {
-                $producer = $this->factory->getProducer($nextPayload['type']);
+                $producer = $this->factory->getProducer($this->types[$nextPayload['type']]);
 
                 $producer->publish(serialize($nextPayload));
             }

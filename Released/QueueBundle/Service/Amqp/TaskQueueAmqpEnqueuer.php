@@ -2,29 +2,30 @@
 
 namespace Released\QueueBundle\Service\Amqp;
 
-use OldSound\RabbitMqBundle\RabbitMq\Producer;
 use Released\QueueBundle\DependencyInjection\Util\ConfigQueuedTaskType;
 use Released\QueueBundle\Exception\BCBreakException;
 use Released\QueueBundle\Model\BaseTask;
 use Released\QueueBundle\Service\EnqueuerInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class TaskQueueAmqpEnqueuer implements EnqueuerInterface
 {
 
     /** @var ReleasedAmqpFactory */
     protected $factory;
+    /** @var ConfigQueuedTaskType[] */
+    protected $types;
 
-    function __construct(ReleasedAmqpFactory $factory)
+    function __construct(ReleasedAmqpFactory $factory, $types)
     {
         $this->factory = $factory;
+        $this->types = $this->fixTypes($types);
     }
 
     /** {@inheritdoc} */
     public function enqueue(BaseTask $task)
     {
         // Get producer
-        $producer = $this->factory->getProducer($task->getType());
+        $producer = $this->factory->getProducer($this->getQueueType($task));
 
         $payload = $this->buildPayload($task);
 
@@ -61,5 +62,33 @@ class TaskQueueAmqpEnqueuer implements EnqueuerInterface
         return $payload;
     }
 
+    /**
+     * @param BaseTask $task
+     * @return ConfigQueuedTaskType
+     */
+    protected function getQueueType(BaseTask $task)
+    {
+        return $this->types[$task->getType()];
+    }
+
+    /**
+     * TODO: duplicate from {@see TaskQueueAmqpExecutor}
+     * @param $types
+     * @return array
+     */
+    protected function fixTypes($types): array
+    {
+        $result = [];
+
+        foreach ($types as $key => $type) {
+            if ($type instanceof ConfigQueuedTaskType) {
+                $result[$type->getName()] = $type;
+            } else {
+                $result[$key] = new ConfigQueuedTaskType($key, $type['class_name'], $type['priority'], $type['local'], $type['retry_limit']);
+            }
+        }
+
+        return $result;
+    }
 
 }

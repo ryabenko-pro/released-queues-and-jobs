@@ -54,7 +54,7 @@ services:
 
     released.queue.task_queue.service_amqp:
         class: Released\QueueBundle\Service\Amqp\TaskQueueAmqpEnqueuer
-        arguments: ['@released.queue.released_amqp_factory']
+        arguments: ['@released.queue.released_amqp_factory', '%released.queue.task_types%']
 
     released.queue.task_queue.service_amqp_executor:
         class: Released\QueueBundle\Service\Amqp\TaskQueueAmqpExecutor

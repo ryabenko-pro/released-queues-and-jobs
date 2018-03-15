@@ -12,8 +12,6 @@ use Released\QueueBundle\DependencyInjection\Util\ConfigQueuedTaskType;
 class ReleasedAmqpFactory
 {
 
-    /** @var ConfigQueuedTaskType[] */
-    protected $types;
     /** @var AbstractConnection */
     protected $conn;
     /** @var string */
@@ -36,23 +34,24 @@ class ReleasedAmqpFactory
     }
 
     /**
-     * @param string $type
-     * @param bool $isLocal
+     * @param ConfigQueuedTaskType $type
      * @return ProducerInterface
      */
-    public function getProducer(string $type, $isLocal = false): ProducerInterface
+    public function getProducer(ConfigQueuedTaskType $type): ProducerInterface
     {
-        if (!isset($this->producers[$type])) {
+        $name = $type->getName();
+
+        if (!isset($this->producers[$name])) {
             $producer = new Producer($this->conn);
 
-            $exchangeOptions = $this->getExchangeOptions($type, $isLocal);
+            $exchangeOptions = $this->getExchangeOptions($name, $type->isLocal());
             $producer->setExchangeOptions($exchangeOptions);
             $producer->setQueueOptions(['name' => $exchangeOptions['name']]);
 
-            $this->producers[$type] = $producer;
+            $this->producers[$name] = $producer;
         }
 
-        return $this->producers[$type];
+        return $this->producers[$name];
     }
 
     /**

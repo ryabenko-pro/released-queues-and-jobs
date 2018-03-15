@@ -3,6 +3,7 @@
 namespace Released\QueueBundle\Tests\Service\Amqp;
 
 use PHPUnit\Framework\MockObject\MockObject;
+use Released\QueueBundle\DependencyInjection\Util\ConfigQueuedTaskType;
 use Released\QueueBundle\Service\Amqp\ReleasedAmqpFactory;
 use Released\QueueBundle\Service\Amqp\TaskQueueAmqpEnqueuer;
 use PHPUnit\Framework\TestCase;
@@ -18,6 +19,8 @@ class TaskQueueAmqpEnqueuerTest extends TestCase
     protected $factory;
     /** @var StubProducer|MockObject */
     protected $producer;
+    /** @var ConfigQueuedTaskType[] */
+    protected $types = [];
 
     /**
      * @inheritDoc
@@ -26,14 +29,16 @@ class TaskQueueAmqpEnqueuerTest extends TestCase
     {
         $this->factory = $this->getMockBuilder(ReleasedAmqpFactory::class)->disableOriginalConstructor()->getMock();
         $this->producer = $this->getMockBuilder(StubProducer::class)->getMock();
-        $this->service = new TaskQueueAmqpEnqueuer($this->factory);
+        $this->types[] = new ConfigQueuedTaskType('stub', StubTask::class, 5);
+
+        $this->service = new TaskQueueAmqpEnqueuer($this->factory, $this->types);
     }
 
     public function testShouldPublishMessage()
     {
         // EXPECTS
         $this->factory->expects($this->once())->method('getProducer')
-            ->with('stub')->willReturn($this->producer);
+            ->with($this->types[0])->willReturn($this->producer);
 
         $this->producer->expects($this->once())->method('publish')
             ->with(serialize(['type' => 'stub', 'data' => ['some' => 'data']]));
@@ -45,9 +50,16 @@ class TaskQueueAmqpEnqueuerTest extends TestCase
 
     public function testShouldPublishMessagesChain()
     {
+        // GIVEN
+        $task = new StubTask(['some' => 'data']);
+        $task->addNextTask(new StubTask(['child' => 1]));
+        $task->addNextTask(new StubTask(['child' => 2]));
+        $parent = new StubTask(['parent' => 'task']);
+        $parent->addNextTask($task);
+
         // EXPECTS
         $this->factory->expects($this->once())->method('getProducer')
-            ->with('stub')->willReturn($this->producer);
+            ->with($this->types[0])->willReturn($this->producer);
 
         $this->producer->expects($this->once())->method('publish')
             ->with(serialize([
@@ -64,13 +76,6 @@ class TaskQueueAmqpEnqueuerTest extends TestCase
             ]));
 
         // WHEN
-        $task = new StubTask(['some' => 'data']);
-        $task->addNextTask(new StubTask(['child' => 1]));
-        $task->addNextTask(new StubTask(['child' => 2]));
-
-        $parent = new StubTask(['parent' => 'task']);
-        $parent->addNextTask($task);
-
         $this->service->enqueue($parent);
     }
 }

@@ -36,13 +36,16 @@ class ReleasedAmqpFactoryTest extends TestCase
     public function testShouldCreateProducer()
     {
         // WHEN
-        $producer = $this->factory->getProducer('some.type_name');
+        $producer = $this->factory->getProducer($this->createTaskType('some.type_name'));
 
         // THEN
         $expected = new Producer($this->connection);
         $expected->setExchangeOptions([
             'name' => 'released.some_type__name',
             'type' => 'direct',
+        ]);
+        $expected->setQueueOptions([
+            'name' => 'released.some_type__name',
         ]);
 
         $this->assertEquals($expected, $producer);
@@ -52,13 +55,16 @@ class ReleasedAmqpFactoryTest extends TestCase
     {
         // WHEN
         $this->factory->setServerId('server_id');
-        $producer = $this->factory->getProducer('some.type_name', true);
+        $producer = $this->factory->getProducer($this->createTaskType('some.type_name', true));
 
         // THEN
         $expected = new Producer($this->connection);
         $expected->setExchangeOptions([
             'name' => 'released.some_type__name.server_id',
             'type' => 'direct',
+        ]);
+        $expected->setQueueOptions([
+            'name' => 'released.some_type__name.server_id',
         ]);
 
         $this->assertEquals($expected, $producer);
@@ -67,7 +73,7 @@ class ReleasedAmqpFactoryTest extends TestCase
     public function testShouldCreateConsumer()
     {
         // WHEN
-        $consumer = $this->factory->getConsumer([new ConfigQueuedTaskType('new.some_type', StubTask::class, 5)]);
+        $consumer = $this->factory->getConsumer([$this->createTaskType('some.type_name')]);
 
         // THEN
         $expected = new MultiExchangeConsumer($this->connection, $this->channel);
@@ -82,7 +88,7 @@ class ReleasedAmqpFactoryTest extends TestCase
             'exclusive' => false,
             'auto_delete' => false,
         ]);
-        $expected->addQueue('released.new_some__type');
+        $expected->addQueue('released.some_type__name');
 
         $this->assertEquals($expected, $consumer);
     }
@@ -91,7 +97,7 @@ class ReleasedAmqpFactoryTest extends TestCase
     {
         // WHEN
         $this->factory->setServerId('server_id');
-        $consumer = $this->factory->getConsumer([new ConfigQueuedTaskType('new.some_type', StubTask::class, 5, true)]);
+        $consumer = $this->factory->getConsumer([$this->createTaskType('some.type_name', true)]);
 
         // THEN
         $expected = new MultiExchangeConsumer($this->connection, $this->channel);
@@ -106,7 +112,7 @@ class ReleasedAmqpFactoryTest extends TestCase
             'exclusive' => false,
             'auto_delete' => false,
         ]);
-        $expected->addQueue('released.new_some__type.server_id');
+        $expected->addQueue('released.some_type__name.server_id');
 
         $this->assertEquals($expected, $consumer);
     }
@@ -120,7 +126,7 @@ class ReleasedAmqpFactoryTest extends TestCase
             ['queue_option' => '1', 'name' => 'not.relevant', 'passive' => true, 'durable' => false,],
             'prefix'
         );
-        $consumer = $factory->getConsumer([new ConfigQueuedTaskType('new.some_type', StubTask::class, 5)]);
+        $consumer = $factory->getConsumer([$this->createTaskType('some.type_name')]);
 
         // THEN
         $expected = new MultiExchangeConsumer($this->connection, $this->channel);
@@ -137,8 +143,12 @@ class ReleasedAmqpFactoryTest extends TestCase
             'auto_delete' => false,
             'queue_option' => '1',
         ]);
-        $expected->addQueue('prefix.new_some__type');
+        $expected->addQueue('prefix.some_type__name');
 
         $this->assertEquals($expected, $consumer);
+    }
+
+    private function createTaskType($name, $isLocal = false) {
+        return new ConfigQueuedTaskType($name, StubTask::class, 5, $isLocal);
     }
 }
