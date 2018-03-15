@@ -47,6 +47,10 @@ services:
             - '%released.queue.amqp.exchange_options%'
             - '%released.queue.amqp.queue_options%'
             - '%released.queue.amqp.exchange_prefix%'
+        calls:
+            - method: setServerId
+              arguments:
+                  - '%released.queue.server_id%'
 
     released.queue.task_queue.service_amqp:
         class: Released\QueueBundle\Service\Amqp\TaskQueueAmqpEnqueuer
