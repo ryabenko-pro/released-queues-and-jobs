@@ -45,7 +45,9 @@ class ReleasedAmqpFactory
         if (!isset($this->producers[$type])) {
             $producer = new Producer($this->conn);
 
-            $producer->setExchangeOptions($this->getExchangeOptions($type, $isLocal));
+            $exchangeOptions = $this->getExchangeOptions($type, $isLocal);
+            $producer->setExchangeOptions($exchangeOptions);
+            $producer->setQueueOptions(['name' => $exchangeOptions['name']]);
 
             $this->producers[$type] = $producer;
         }
