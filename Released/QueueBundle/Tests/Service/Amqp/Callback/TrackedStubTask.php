@@ -55,7 +55,13 @@ class TrackedStubTask extends BaseTask
             return $default;
         }
 
-        return array_shift(self::$methodReturns[$method]);
+        $return = array_shift(self::$methodReturns[$method]);
+
+        if (is_callable($return)) {
+            return $return();
+        }
+
+        return $return;
     }
 
     public static function addMethodReturns($method, $return)
