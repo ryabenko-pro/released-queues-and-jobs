@@ -77,7 +77,7 @@ class TaskQueueAmqpExecutor implements TaskLoggerInterface
      */
     public function processMessage(AMQPMessage $message, TaskLoggerInterface $logger = null)
     {
-        $payload = unserialize($message->getBody());
+        $payload = MessageUtil::unserialize($message->getBody());
 
         $type = $this->types[$payload['type']];
 
@@ -100,7 +100,7 @@ class TaskQueueAmqpExecutor implements TaskLoggerInterface
                     foreach ($payload['next'] as $nextPayload) {
                         $producer = $this->factory->getProducer($this->types[$nextPayload['type']]);
 
-                        $producer->publish(serialize($nextPayload));
+                        $producer->publish(MessageUtil::serialize($nextPayload));
                     }
                 }
             } else {
@@ -194,7 +194,7 @@ class TaskQueueAmqpExecutor implements TaskLoggerInterface
 
         if ($force || $payload['retry'] <= $type->getRetryLimit()) {
             $producer = $this->factory->getProducer($type);
-            $producer->publish(serialize($payload));
+            $producer->publish(MessageUtil::serialize($payload));
         }
     }
 }

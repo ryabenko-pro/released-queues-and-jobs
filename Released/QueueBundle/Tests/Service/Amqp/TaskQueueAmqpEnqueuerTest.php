@@ -4,6 +4,7 @@ namespace Released\QueueBundle\Tests\Service\Amqp;
 
 use PHPUnit\Framework\MockObject\MockObject;
 use Released\QueueBundle\DependencyInjection\Util\ConfigQueuedTaskType;
+use Released\QueueBundle\Service\Amqp\MessageUtil;
 use Released\QueueBundle\Service\Amqp\ReleasedAmqpFactory;
 use Released\QueueBundle\Service\Amqp\TaskQueueAmqpEnqueuer;
 use PHPUnit\Framework\TestCase;
@@ -41,7 +42,7 @@ class TaskQueueAmqpEnqueuerTest extends TestCase
             ->with($this->types[0])->willReturn($this->producer);
 
         $this->producer->expects($this->once())->method('publish')
-            ->with(serialize(['type' => 'stub', 'data' => ['some' => 'data']]));
+            ->with(MessageUtil::serialize(['type' => 'stub', 'data' => ['some' => 'data']]));
 
         // WHEN
         $task = new StubTask(['some' => 'data']);
@@ -62,7 +63,7 @@ class TaskQueueAmqpEnqueuerTest extends TestCase
             ->with($this->types[0])->willReturn($this->producer);
 
         $this->producer->expects($this->once())->method('publish')
-            ->with(serialize([
+            ->with(MessageUtil::serialize([
                 'type' => 'stub',
                 'data' => ['parent' => 'task'],
                 'next' => [[

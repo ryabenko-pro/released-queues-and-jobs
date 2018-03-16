@@ -9,6 +9,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Released\QueueBundle\DependencyInjection\Util\ConfigQueuedTaskType;
 use Released\QueueBundle\Exception\TaskRetryException;
+use Released\QueueBundle\Service\Amqp\MessageUtil;
 use Released\QueueBundle\Service\Amqp\ReleasedAmqpFactory;
 use Released\QueueBundle\Service\Amqp\TaskQueueAmqpExecutor;
 use Symfony\Component\DependencyInjection\Container;
@@ -114,7 +115,7 @@ class TaskQueueAmqpExecutorTest extends TestCase
     public function testShouldNotRetryForLimit()
     {
         // EXPECTS
-        $payload = unserialize($this->message->getBody());
+        $payload = MessageUtil::unserialize($this->message->getBody());
         $payload['retry'] = 3;
 
         $message = $this->createMessage($payload);
@@ -137,10 +138,10 @@ class TaskQueueAmqpExecutorTest extends TestCase
         $this->factory->expects($this->once())->method('getProducer')
             ->with($this->types['test'])->willReturn($this->producer);
 
-        $message = unserialize($this->message->getBody());
+        $message = MessageUtil::unserialize($this->message->getBody());
         $message['retry'] = 6;
 
-        $this->producer->expects($this->once())->method('publish')->with(serialize($message));
+        $this->producer->expects($this->once())->method('publish')->with(MessageUtil::serialize($message));
 
         // WHEN
         TrackedStubTask::addMethodReturns('execute', function () {
@@ -156,7 +157,7 @@ class TaskQueueAmqpExecutorTest extends TestCase
         $this->factory->expects($this->at(1))->method('getProducer')->with($this->types['next3'])->willReturn($this->producer);
 
         // EXPECTS
-        $this->producer->expects($this->at(0))->method('publish')->with(serialize([
+        $this->producer->expects($this->at(0))->method('publish')->with(MessageUtil::serialize([
             'type' => 'next1',
             'data' => ['child' => '1'],
             'next' => [[
@@ -165,7 +166,7 @@ class TaskQueueAmqpExecutorTest extends TestCase
             ]]
         ]));
 
-        $this->producer->expects($this->at(1))->method('publish')->with(serialize([
+        $this->producer->expects($this->at(1))->method('publish')->with(MessageUtil::serialize([
             'type' => 'next3',
             'data' => ['child' => '2'],
         ]));
@@ -199,10 +200,10 @@ class TaskQueueAmqpExecutorTest extends TestCase
     function updateMessage($message, $update): string
     {
         $message = $message instanceof AMQPMessage ? $message->getBody() : $message;
-        $message = is_string($message) ? unserialize($message) : $message;
+        $message = is_string($message) ? MessageUtil::unserialize($message) : $message;
 
         $payload = array_merge($message, $update);
-        return serialize($payload);
+        return MessageUtil::serialize($payload);
     }
 
     /**
@@ -212,7 +213,7 @@ class TaskQueueAmqpExecutorTest extends TestCase
     protected function createMessage(array $payload): AMQPMessage
     {
         // TODO: create
-        return new AMQPMessage(serialize($payload));
+        return new AMQPMessage(MessageUtil::serialize($payload));
     }
 }
 

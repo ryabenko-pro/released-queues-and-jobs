@@ -29,7 +29,7 @@ class TaskQueueAmqpEnqueuer implements EnqueuerInterface
 
         $payload = $this->buildPayload($task);
 
-        $message = serialize($payload);
+        $message = MessageUtil::serialize($payload);
 
         $producer->publish($message);
     }
