@@ -103,6 +103,42 @@ class TaskQueueAmqpExecutorTest extends TestCase
 
     public function testShouldRetryOnException()
     {
+        // GIVEN
+        $message = $this->createMessage([
+            'type' => 'test',
+            'data' => ['some' => 'data'],
+            'next' => [[
+                'type' => 'next2',
+                'data' => ['child' => 'task'],
+                'next' => [[
+                    'type' => 'next3',
+                    'data' => ['child' => 'another'],
+                ]]
+            ]]
+        ]);
+
+        // EXPECTS
+        $task = new TrackedStubTask(['some' => 'data']);
+
+        $next = new TrackedStubTask(['child' => 'task']);
+        $next->addNextTask(new TrackedStubTask(['child' => 'another']));
+
+        $task->addNextTask($next);
+
+        $this->enqueuer->expects($this->once())->method('retry')
+            ->with($this->createTasksCompareCallback($task));
+
+        // WHEN
+        TrackedStubTask::addMethodReturns('getType', 'test');
+        TrackedStubTask::addMethodReturns('execute', function () {
+            throw new \RuntimeException("Some runtime exception");
+        });
+
+        $this->executor->processMessage($message);
+    }
+
+    public function testShouldRetryWithChild()
+    {
         // EXPECTS
         $task = new TrackedStubTask(['some' => 'data']);
         $task->setRetries(2);
@@ -119,7 +155,7 @@ class TaskQueueAmqpExecutorTest extends TestCase
         $this->executor->processMessage($this->message);
     }
 
-    public function testShouldNotRetryForLimit()
+    public function testShouldNotRetryOnLimitReached()
     {
         // EXPECTS
         $payload = MessageUtil::unserialize($this->message->getBody());
@@ -128,8 +164,6 @@ class TaskQueueAmqpExecutorTest extends TestCase
         $message = $this->createMessage($payload);
 
         $this->factory->expects($this->never())->method('getProducer');
-
-        $this->producer->expects($this->never())->method('publish');
 
         // WHEN
         TrackedStubTask::addMethodReturns('execute', false);
@@ -199,20 +233,6 @@ class TaskQueueAmqpExecutorTest extends TestCase
         ]);
 
         $this->executor->processMessage($message);
-    }
-
-    /**
-     * @param array|string|AMQPMessage $message
-     * @param $update
-     * @return string
-     */
-    function updateMessage($message, $update): string
-    {
-        $message = $message instanceof AMQPMessage ? $message->getBody() : $message;
-        $message = is_string($message) ? MessageUtil::unserialize($message) : $message;
-
-        $payload = array_merge($message, $update);
-        return MessageUtil::serialize($payload);
     }
 
     /**

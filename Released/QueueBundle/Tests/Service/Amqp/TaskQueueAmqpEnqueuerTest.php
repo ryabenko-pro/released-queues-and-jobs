@@ -116,26 +116,4 @@ class TaskQueueAmqpEnqueuerTest extends TestCase
         // WHEN
         $this->service->retry($task);
     }
-
-    public function testShouldRetryTaskWithNext()
-    {
-        // GIVEN
-        $task = new StubTask(['some' => 'data']);
-
-        // EXPECTS
-        $this->factory->expects($this->once())->method('getProducer')
-            ->with($this->type)->willReturn($this->producer);
-
-        $this->producer->expects($this->once())->method('publish')
-            ->with(MessageUtil::serialize([
-                'type' => 'stub',
-                'data' => ['some' => 'data'],
-                'retry' => $task->getRetries() + 1,
-            ]));
-
-        // WHEN
-        $this->service->retry($task);
-
-        $this->assertFalse("Must be implemented");
-    }
 }
