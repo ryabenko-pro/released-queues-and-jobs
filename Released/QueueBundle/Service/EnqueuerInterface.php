@@ -28,4 +28,11 @@ interface EnqueuerInterface
      */
     public function enqueue(BaseTask $task);
 
+    /**
+     * Retry to execute task
+     *
+     * @param BaseTask $task
+     */
+    public function retry(BaseTask $task);
+
 }

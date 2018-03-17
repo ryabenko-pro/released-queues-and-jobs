@@ -31,12 +31,13 @@ class QueueServicePass implements CompilerPassInterface
                 return 'released.queue.task_queue.service_database';
             case 'amqp':
                 return 'released.queue.task_queue.service_amqp';
+            case 'mixed':
+                return 'released.queue.task_queue.service_mixed';
             case 'inline':
                 return 'released.queue.task_queue.service_inline';
             default:
                 throw new RuntimeException("{$transport} is not yet implemented");
         }
-
     }
 
 }

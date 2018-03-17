@@ -34,6 +34,10 @@ services:
             - "%released.queue.task_types%"
             - '%released.queue.server_id%'
 
+    released.queue.task_queue.service_mixed:
+        class: Released\QueueBundle\Service\Mixed\TaskQueueMixedEnqueuer
+        arguments: ['@released.queue.task_queue.service_database', '@released.queue.task_queue.service_amqp']
+
     released.queue.task_queue.service:
         class: Released\QueueBundle\Service\TaskQueueService
         arguments:
@@ -58,4 +62,9 @@ services:
 
     released.queue.task_queue.service_amqp_executor:
         class: Released\QueueBundle\Service\Amqp\TaskQueueAmqpExecutor
-        arguments: ['@released.queue.released_amqp_factory', '@service_container', '%released.queue.task_types%', '@logger']
+        arguments:
+            - '@released.queue.released_amqp_factory'
+            - '@released.queue.task_queue.service'
+            - '@service_container'
+            - '%released.queue.task_types%'
+            - '@logger'

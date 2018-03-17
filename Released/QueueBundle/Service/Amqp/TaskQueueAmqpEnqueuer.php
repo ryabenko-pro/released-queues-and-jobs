@@ -9,6 +9,10 @@ use Released\QueueBundle\Service\EnqueuerInterface;
 
 class TaskQueueAmqpEnqueuer implements EnqueuerInterface
 {
+    const PAYLOAD_TYPE = 'type';
+    const PAYLOAD_DATA = 'data';
+    const PAYLOAD_NEXT = 'next';
+    const PAYLOAD_RETRY = 'retry';
 
     /** @var ReleasedAmqpFactory */
     protected $factory;
@@ -35,9 +39,11 @@ class TaskQueueAmqpEnqueuer implements EnqueuerInterface
     }
 
     /** {@inheritdoc} */
-    public function addTask(BaseTask $task, BaseTask $parent = null)
+    public function retry(BaseTask $task)
     {
-        throw new BCBreakException('You must use {enqueue} method now.');
+        $task->incRetries();
+
+        $this->enqueue($task);
     }
 
     /**
@@ -47,15 +53,19 @@ class TaskQueueAmqpEnqueuer implements EnqueuerInterface
     protected function buildPayload(BaseTask $task): array
     {
         $payload = [
-            'type' => $task->getType(),
-            'data' => $task->getData(),
+            self::PAYLOAD_TYPE => $task->getType(),
+            self::PAYLOAD_DATA => $task->getData(),
         ];
 
+        if ($task->getRetries() > 0) {
+            $payload[self::PAYLOAD_RETRY] = $task->getRetries();
+        }
+
         if ($task->getNextTasks()) {
-            $payload['next'] = [];
+            $payload[self::PAYLOAD_NEXT] = [];
 
             foreach ($task->getNextTasks() as $next) {
-                $payload['next'][] = $this->buildPayload($next);
+                $payload[self::PAYLOAD_NEXT][] = $this->buildPayload($next);
             }
         }
 
@@ -91,4 +101,9 @@ class TaskQueueAmqpEnqueuer implements EnqueuerInterface
         return $result;
     }
 
+    /** {@inheritdoc} */
+    public function addTask(BaseTask $task, BaseTask $parent = null)
+    {
+        throw new BCBreakException('You must use {enqueue} method now.');
+    }
 }

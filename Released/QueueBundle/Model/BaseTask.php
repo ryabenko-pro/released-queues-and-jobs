@@ -15,6 +15,7 @@ abstract class BaseTask
 {
 
     protected $data;
+    protected $retries = 0;
 
     /** @var BaseTask[] */
     protected $next = [];
@@ -38,6 +39,42 @@ abstract class BaseTask
         $this->entity = $entity;
         $this->scheduledAt = $scheduledAt;
     }
+
+    /**
+     * Check data provided. Should trow exception, if data not valid.
+     *
+     * @param array $data
+     * @throws TaskAddException
+     */
+    public function validateData($data) { }
+
+    /**
+     * Before task added into queue.
+     * !WARNING! this method and `execute` very likely to be executed in different context.
+     * Do not make execute method depended on preExecute
+     *
+     * @param ContainerInterface $container
+     * @param TaskLoggerInterface $logger
+     * @return mixed|void
+     */
+    public function beforeAdd(ContainerInterface $container, TaskLoggerInterface $logger) { }
+
+    /**
+     * Run task
+     *
+     * @param ContainerInterface $container
+     * @param TaskLoggerInterface $logger
+     * @return mixed
+     *
+     * @throws TaskRetryException
+     */
+    abstract public function execute(ContainerInterface $container, TaskLoggerInterface $logger);
+
+    /**
+     * Returns the type of task to be executed
+     * @return string
+     */
+    abstract public function getType();
 
     /**
      * @param string|null $param Param name to return
@@ -120,6 +157,25 @@ abstract class BaseTask
         return $this;
     }
 
+    public function getRetries(): int
+    {
+        return $this->retries;
+    }
+
+    public function setRetries(int $retries): self
+    {
+        $this->retries = $retries;
+
+        return $this;
+    }
+
+    public function incRetries(): int
+    {
+        $this->retries++;
+
+        return $this->retries;
+    }
+
     /**
      * @return \DateTime
      */
@@ -127,7 +183,6 @@ abstract class BaseTask
     {
         return $this->scheduledAt;
     }
-
     /**
      * @param \DateTime $scheduledAt
      */
@@ -135,41 +190,5 @@ abstract class BaseTask
     {
         $this->scheduledAt = $scheduledAt;
     }
-
-    /**
-     * Check data provided. Should trow exception, if data not valid.
-     *
-     * @param array $data
-     * @throws TaskAddException
-     */
-    public function validateData($data) { }
-
-    /**
-     * Before task added into queue.
-     * !WARNING! this method and `execute` very likely to be executed in different context.
-     * Do not make execute method depended on preExecute
-     *
-     * @param ContainerInterface $container
-     * @param TaskLoggerInterface $logger
-     * @return mixed|void
-     */
-    public function beforeAdd(ContainerInterface $container, TaskLoggerInterface $logger) { }
-
-    /**
-     * Run task
-     *
-     * @param ContainerInterface $container
-     * @param TaskLoggerInterface $logger
-     * @return mixed
-     *
-     * @throws TaskRetryException
-     */
-    abstract public function execute(ContainerInterface $container, TaskLoggerInterface $logger);
-
-    /**
-     * Returns the type of task to be executed
-     * @return string
-     */
-    abstract public function getType();
 
 }
