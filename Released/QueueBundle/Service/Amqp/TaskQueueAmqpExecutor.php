@@ -4,12 +4,13 @@ namespace Released\QueueBundle\Service\Amqp;
 
 use Monolog\Logger;
 use PhpAmqpLib\Message\AMQPMessage;
+use PHPUnit\Framework\Exception as TestException;
 use Psr\Log\LoggerInterface;
 use Released\QueueBundle\DependencyInjection\Util\ConfigQueuedTaskType;
 use Released\QueueBundle\Exception\TaskAddException;
-use Released\QueueBundle\Exception\TaskExecutionException;
 use Released\QueueBundle\Exception\TaskRetryException;
 use Released\QueueBundle\Model\BaseTask;
+use Released\QueueBundle\Service\EnqueuerInterface;
 use Released\QueueBundle\Service\Logger\TaskLoggerAggregate;
 use Released\QueueBundle\Service\TaskLoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -20,6 +21,8 @@ class TaskQueueAmqpExecutor implements TaskLoggerInterface
 
     /** @var ReleasedAmqpFactory */
     protected $factory;
+    /** @var EnqueuerInterface */
+    protected $enqueuer;
     /** @var ContainerInterface */
     protected $container;
     /** @var ConfigQueuedTaskType[] */
@@ -30,9 +33,10 @@ class TaskQueueAmqpExecutor implements TaskLoggerInterface
     protected $messagesLimit = null;
     protected $memoryLimit = null;
 
-    function __construct(ReleasedAmqpFactory $factory, ContainerInterface $container, $types, LoggerInterface $logger = null)
+    function __construct(ReleasedAmqpFactory $factory, EnqueuerInterface $enqueuer, ContainerInterface $container, $types, LoggerInterface $logger = null)
     {
         $this->factory = $factory;
+        $this->enqueuer = $enqueuer;
         $this->container = $container;
         $this->types = $this->fixTypes($types);
         $this->logger = $logger;
@@ -79,7 +83,7 @@ class TaskQueueAmqpExecutor implements TaskLoggerInterface
     {
         $payload = MessageUtil::unserialize($message->getBody());
 
-        $type = $this->types[$payload['type']];
+        $type = $this->types[$payload[TaskQueueAmqpEnqueuer::PAYLOAD_TYPE]];
 
         $logger = is_null($logger) ? $this : new TaskLoggerAggregate([$this, $logger]);
 
@@ -90,27 +94,30 @@ class TaskQueueAmqpExecutor implements TaskLoggerInterface
         }
 
         /** @var BaseTask $task */
-        $task = new $class($payload['data'] ?? []);
+        $task = new $class($payload[TaskQueueAmqpEnqueuer::PAYLOAD_DATA] ?? []);
+        $task->setRetries($payload[TaskQueueAmqpEnqueuer::PAYLOAD_RETRY] ?? 0);
 
         // Execute task and nack if false
         try {
-            if ($task->execute($this->container, $logger)) {
+            if (false !== $task->execute($this->container, $logger)) {
                 // Enqueue next tasks
-                if (isset($payload['next'])) {
-                    foreach ($payload['next'] as $nextPayload) {
+                if (isset($payload[TaskQueueAmqpEnqueuer::PAYLOAD_NEXT])) {
+                    foreach ($payload[TaskQueueAmqpEnqueuer::PAYLOAD_NEXT] as $nextPayload) {
                         $producer = $this->factory->getProducer($this->types[$nextPayload['type']]);
 
                         $producer->publish(MessageUtil::serialize($nextPayload));
                     }
                 }
             } else {
-                $this->retryTask($payload);
+                $this->retryTask($task);
             }
         } catch (TaskRetryException $exception) {
-            $this->retryTask($payload, true);
+            $this->retryTask($task, true);
+        } catch (TestException $exception) {
+            throw $exception;
         } catch (\Exception $exception) {
             // TODO: catch and log exception
-            $this->retryTask($payload);
+            $this->retryTask($task);
         }
     }
 
@@ -183,18 +190,15 @@ class TaskQueueAmqpExecutor implements TaskLoggerInterface
     }
 
     /**
-     * @param array $payload
+     * @param BaseTask $task
      * @param bool $force Force requeue task
      */
-    protected function retryTask($payload, $force = false)
+    protected function retryTask(BaseTask $task, $force = false)
     {
-        $type = $this->types[$payload['type']];
+        $type = $this->types[$task->getType()];
 
-        $payload['retry'] = isset($payload['retry']) ? $payload['retry'] + 1 : 1;
-
-        if ($force || $payload['retry'] <= $type->getRetryLimit()) {
-            $producer = $this->factory->getProducer($type);
-            $producer->publish(MessageUtil::serialize($payload));
+        if ($force || $task->getRetries() <= $type->getRetryLimit()) {
+            $this->enqueuer->retry($task);
         }
     }
 }

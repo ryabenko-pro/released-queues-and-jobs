@@ -12,6 +12,7 @@ use Released\QueueBundle\Exception\TaskRetryException;
 use Released\QueueBundle\Service\Amqp\MessageUtil;
 use Released\QueueBundle\Service\Amqp\ReleasedAmqpFactory;
 use Released\QueueBundle\Service\Amqp\TaskQueueAmqpExecutor;
+use Released\QueueBundle\Service\EnqueuerInterface;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -26,6 +27,8 @@ class TaskQueueAmqpExecutorTest extends TestCase
     protected $message;
     /** @var ReleasedAmqpFactory|MockObject */
     protected $factory;
+    /** @var EnqueuerInterface|MockObject */
+    protected $enqueuer;
     /** @var TaskQueueAmqpExecutor */
     protected $executor;
     /** @var ProducerInterface|MockObject */
@@ -39,6 +42,7 @@ class TaskQueueAmqpExecutorTest extends TestCase
         $this->producer = $this->getMockBuilder(Producer::class)->disableOriginalConstructor()->getMock();
 
         $this->factory = $this->getMockBuilder(ReleasedAmqpFactory::class)->disableOriginalConstructor()->getMock();
+        $this->enqueuer = $this->getMockBuilder(EnqueuerInterface::class)->getMock();
 
         $this->container = new Container();
 
@@ -48,7 +52,7 @@ class TaskQueueAmqpExecutorTest extends TestCase
         $this->types['next2'] = new ConfigQueuedTaskType('next2', TrackedStubTask::class, 5);
         $this->types['next3'] = new ConfigQueuedTaskType('next3', TrackedStubTask::class, 5);
 
-        $this->executor = new TaskQueueAmqpExecutor($this->factory, $this->container, $this->types);
+        $this->executor = new TaskQueueAmqpExecutor($this->factory, $this->enqueuer, $this->container, $this->types);
         TrackedStubTask::$instances = [];
         TrackedStubTask::addMethodReturns('getType', 'test');
     }
@@ -62,6 +66,8 @@ class TaskQueueAmqpExecutorTest extends TestCase
         $this->assertEquals(1, count(TrackedStubTask::$instances), "Exactly 1 task must be created");
 
         $expected = new TrackedStubTask(['some' => 'data']);
+        $expected->setRetries(2);
+
         $expected->execute($this->container, $this->executor);
         $this->assertEquals($expected, TrackedStubTask::$instances[0]);
     }
@@ -81,14 +87,14 @@ class TaskQueueAmqpExecutorTest extends TestCase
     public function testShouldRetryFailed()
     {
         // EXPECTS
-        $this->factory->expects($this->once())->method('getProducer')
-            ->with($this->types['test'])->willReturn($this->producer);
+        $task = new TrackedStubTask(['some' => 'data']);
+        $task->setRetries(2);
 
-        $message = $this->updateMessage($this->message, ['retry' => 3]);
-
-        $this->producer->expects($this->once())->method('publish')->with($message);
+        $this->enqueuer->expects($this->once())->method('retry')
+            ->with($this->createTasksCompareCallback($task));
 
         // WHEN
+        TrackedStubTask::addMethodReturns('getType', 'test');
         TrackedStubTask::addMethodReturns('execute', false);
 
         $this->executor->processMessage($this->message);
@@ -97,14 +103,14 @@ class TaskQueueAmqpExecutorTest extends TestCase
     public function testShouldRetryOnException()
     {
         // EXPECTS
-        $this->factory->expects($this->once())->method('getProducer')
-            ->with($this->types['test'])->willReturn($this->producer);
+        $task = new TrackedStubTask(['some' => 'data']);
+        $task->setRetries(2);
 
-        $message = $this->updateMessage($this->message, ['retry' => 3]);
-
-        $this->producer->expects($this->once())->method('publish')->with($message);
+        $this->enqueuer->expects($this->once())->method('retry')
+            ->with($this->createTasksCompareCallback($task));
 
         // WHEN
+        TrackedStubTask::addMethodReturns('getType', 'test');
         TrackedStubTask::addMethodReturns('execute', function () {
             throw new \RuntimeException("Some runtime exception");
         });
@@ -135,13 +141,15 @@ class TaskQueueAmqpExecutorTest extends TestCase
         // EXPECTS
         $this->message = $this->createMessage(['type' => 'test', 'data' => ['some' => 'data'], 'retry' => 5]);
 
-        $this->factory->expects($this->once())->method('getProducer')
-            ->with($this->types['test'])->willReturn($this->producer);
-
         $message = MessageUtil::unserialize($this->message->getBody());
         $message['retry'] = 6;
 
-        $this->producer->expects($this->once())->method('publish')->with(MessageUtil::serialize($message));
+        $task = new TrackedStubTask(['some' => 'data']);
+        $task->setRetries(5);
+        TrackedStubTask::addMethodReturns('getType', 'test');
+
+        $this->enqueuer->expects($this->once())->method('retry')
+            ->with($this->createTasksCompareCallback($task));
 
         // WHEN
         TrackedStubTask::addMethodReturns('execute', function () {
@@ -214,6 +222,21 @@ class TaskQueueAmqpExecutorTest extends TestCase
     {
         // TODO: create
         return new AMQPMessage(MessageUtil::serialize($payload));
+    }
+
+    /**
+     * @param $task
+     * @return Callback
+     */
+    protected function createTasksCompareCallback($task)
+    {
+        return $this->callback(function (TrackedStubTask $value) use ($task) {
+            $value->calls = $task->calls;
+
+            $this->assertEquals($task, $value);
+
+            return true;
+        });
     }
 }
 

@@ -4,7 +4,7 @@
 namespace Released\QueueBundle\Service\Db;
 
 
-use PHPUnit\Framework\ExpectationFailedException;
+use PHPUnit\Framework\Exception as TestException;
 use Released\QueueBundle\DependencyInjection\Util\ConfigQueuedTaskType;
 use Released\QueueBundle\Entity\QueuedTask;
 use Released\QueueBundle\Exception\BCBreakException;
@@ -19,8 +19,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 
 
 /**
- * This class add task into queue to be executed later.
- * Good for prod env
+ * This class add task into database to be executed in separate environment
  */
 class TaskQueueDbService implements EnqueuerInterface, TaskLoggerInterface
 {
@@ -40,18 +39,12 @@ class TaskQueueDbService implements EnqueuerInterface, TaskLoggerInterface
      * @param ConfigQueuedTaskType[] $types
      * @param string|null $serverId ID of the server to run local tasks
      */
-    function __construct($container, $queuedTaskRepository, $types, $serverId = null)
+    function __construct(ContainerInterface $container, QueuedTaskRepository $queuedTaskRepository, $types, $serverId = null)
     {
         $this->container = $container;
         $this->queuedTaskRepository = $queuedTaskRepository;
         $this->types = $types;
         $this->serverId = $serverId;
-    }
-
-    /** {@inheritdoc} */
-    public function addTask(BaseTask $task, BaseTask $parent = null)
-    {
-        throw new BCBreakException('You must use {enqueue} method now.');
     }
 
     /**
@@ -102,6 +95,18 @@ class TaskQueueDbService implements EnqueuerInterface, TaskLoggerInterface
         return $entity->getId();
     }
 
+    /** {@inheritdoc} */
+    public function retry(BaseTask $task)
+    {
+        $entity = $task->getEntity();
+        if (is_null($entity)) {
+            throw new TaskAddException("Can't retry task that was not persisted before");
+        }
+
+        $entity->setTries($task->incRetries());
+        $this->queuedTaskRepository->saveQueuedTask($entity);
+    }
+
     /**
      * Execute task. Usually from background cron command.
      * @param BaseTask $task
@@ -138,46 +143,12 @@ class TaskQueueDbService implements EnqueuerInterface, TaskLoggerInterface
                 $entity->addLog($output, 'info');
             }
         } catch (TaskRetryException $exception) {
-            $type = $this->getType($task->getType());
+            $this->handleRetryException($task, $entity, $exception);
 
-            if ($entity->getTries() >= $type->getRetryLimit()) {
-                // Don't retry again.
-                $entity->setState($entity::STATE_FAIL);
-
-                $output = $this->catchOutput();
-                if (!empty($output)) {
-                    $entity->addLog($output, 'info');
-                }
-
-                $log = sprintf("[%s]: %s", get_class($exception), $exception->getMessage());
-                $entity->addLog($log, 'retry');
-                $entity->addLog("Retry limit ({$type->getRetryLimit()}) exceeded", 'fail');
-            } else {
-                $log = sprintf("[%s]: %s", get_class($exception), $exception->getMessage());
-
-                $output = $this->catchOutput();
-                if (!empty($output)) {
-                    $entity->addLog($output, 'info');
-                }
-
-                $entity
-                    ->setState($entity::STATE_RETRY)
-                    // TODO: make it an expression
-                    ->setTries($entity->getTries() + 1)
-                    ->addLog($log, 'retry');
-
-                $timeout = $exception->getTimeout();
-                if (!is_null($timeout) && is_int($timeout)) {
-                    $entity->setScheduledAt(new \DateTime("+{$timeout} seconds"));
-                }
-            }
-
-        } catch (ExpectationFailedException $exception) {
+        } catch (TestException $exception) {
             $this->catchOutput();
+
             throw $exception;
-//        } catch (UnexpectedHTTPCodeException $ex) {
-//            $this->container->get('event_dispatcher')
-//                ->dispatch(QueueEventNames::UNEXPECTED_HTTP_CODE, new QueueExceptionEvent($ex->getMessage()));
         } catch (\Exception $exception) {
             $entity->setState($entity::STATE_FAIL);
             $output = $this->catchOutput();
@@ -194,6 +165,43 @@ class TaskQueueDbService implements EnqueuerInterface, TaskLoggerInterface
 
         if ($entity->isDone()) {
             $this->queuedTaskRepository->updateDependTasks($entity);
+        }
+    }
+
+    protected function handleRetryException(BaseTask $task, QueuedTask $entity, TaskRetryException $exception): void
+    {
+        $type = $this->getType($task->getType());
+
+        if ($entity->getTries() >= $type->getRetryLimit()) {
+            // Don't retry again.
+            $entity->setState($entity::STATE_FAIL);
+
+            $output = $this->catchOutput();
+            if (!empty($output)) {
+                $entity->addLog($output, 'info');
+            }
+
+            $log = sprintf("[%s]: %s", get_class($exception), $exception->getMessage());
+            $entity->addLog($log, 'retry');
+            $entity->addLog("Retry limit ({$type->getRetryLimit()}) exceeded", 'fail');
+        } else {
+            $log = sprintf("[%s]: %s", get_class($exception), $exception->getMessage());
+
+            $output = $this->catchOutput();
+            if (!empty($output)) {
+                $entity->addLog($output, 'info');
+            }
+
+            $entity
+                ->setState($entity::STATE_RETRY)
+                // TODO: make it an expression
+                ->setTries($entity->getTries() + 1)
+                ->addLog($log, 'retry');
+
+            $timeout = $exception->getTimeout();
+            if (!is_null($timeout) && is_int($timeout)) {
+                $entity->setScheduledAt(new \DateTime("+{$timeout} seconds"));
+            }
         }
     }
 
@@ -306,5 +314,11 @@ class TaskQueueDbService implements EnqueuerInterface, TaskLoggerInterface
     {
         $this->serverId = $serverId;
         return $this;
+    }
+
+    /** {@inheritdoc} */
+    public function addTask(BaseTask $task, BaseTask $parent = null)
+    {
+        throw new BCBreakException('You must use {enqueue} method now.');
     }
 }

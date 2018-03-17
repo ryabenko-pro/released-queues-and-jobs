@@ -4,6 +4,7 @@ namespace Released\QueueBundle\Service\Inline;
 
 use Released\QueueBundle\Entity\QueuedTask;
 use Released\QueueBundle\Exception\BCBreakException;
+use Released\QueueBundle\Exception\TaskAddException;
 use Released\QueueBundle\Model\BaseTask;
 use Psr\Log\LoggerInterface;
 use Released\QueueBundle\Service\EnqueuerInterface;
@@ -33,14 +34,6 @@ class InlineEnqueuerService implements EnqueuerInterface, TaskLoggerInterface
         $this->logger = $logger;
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function addTask(BaseTask $task, BaseTask $parent = null)
-    {
-        throw new BCBreakException('You must use {enqueue} method now.');
-    }
-
     /** {@inheritdoc} */
     public function enqueue(BaseTask $task)
     {
@@ -48,6 +41,12 @@ class InlineEnqueuerService implements EnqueuerInterface, TaskLoggerInterface
         $task->execute($this->container, $this);
 
         return null;
+    }
+
+    /** {@inheritdoc} */
+    public function retry(BaseTask $task)
+    {
+        throw new TaskAddException("Inline execution task can't be restarted");
     }
 
     /**
@@ -67,5 +66,13 @@ class InlineEnqueuerService implements EnqueuerInterface, TaskLoggerInterface
             default:
                 $this->logger->info($log);
         }
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function addTask(BaseTask $task, BaseTask $parent = null)
+    {
+        throw new BCBreakException('You must use {enqueue} method now.');
     }
 }

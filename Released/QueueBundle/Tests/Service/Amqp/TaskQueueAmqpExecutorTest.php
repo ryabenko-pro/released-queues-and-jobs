@@ -8,6 +8,7 @@ use Released\QueueBundle\Service\Amqp\MultiExchangeConsumer;
 use Released\QueueBundle\Service\Amqp\ReleasedAmqpFactory;
 use Released\QueueBundle\Service\Amqp\TaskQueueAmqpExecutor;
 use PHPUnit\Framework\TestCase;
+use Released\QueueBundle\Service\EnqueuerInterface;
 use Released\QueueBundle\Tests\StubTask;
 use Symfony\Component\DependencyInjection\Container;
 
@@ -17,23 +18,24 @@ class TaskQueueAmqpExecutorTest extends TestCase
     protected $types = [];
     /** @var ReleasedAmqpFactory|MockObject */
     protected $factory;
+    /** @var EnqueuerInterface|MockObject */
+    protected $enqueuer;
     /** @var Container */
     protected $container;
     /** @var TaskQueueAmqpExecutor */
     protected $executor;
 
-    /**
-     * @inheritDoc
-     */
+    /** @inheritDoc */
     protected function setUp()
     {
         $this->factory = $this->getMockBuilder(ReleasedAmqpFactory::class)->disableOriginalConstructor()->getMock();
+        $this->enqueuer = $this->getMockBuilder(EnqueuerInterface::class)->getMock();
         $this->container = new Container();
 
         $this->types[] = new ConfigQueuedTaskType('stub', StubTask::class, 5);
         $this->types[] = new ConfigQueuedTaskType('test', StubTask::class, 5);
 
-        $this->executor = new TaskQueueAmqpExecutor($this->factory, $this->container, $this->types);
+        $this->executor = new TaskQueueAmqpExecutor($this->factory, $this->enqueuer, $this->container, $this->types);
     }
 
     public function testShouldBindToExchanges()
