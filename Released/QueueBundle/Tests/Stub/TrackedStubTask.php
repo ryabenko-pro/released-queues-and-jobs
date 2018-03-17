@@ -1,6 +1,6 @@
 <?php
 
-namespace Released\QueueBundle\Tests\Service\Amqp\Callback;
+namespace Released\QueueBundle\Tests\Stub;
 
 use Released\QueueBundle\Model\BaseTask;
 use Released\QueueBundle\Service\TaskLoggerInterface;

@@ -13,6 +13,7 @@ class TaskQueueAmqpEnqueuer implements EnqueuerInterface
     const PAYLOAD_DATA = 'data';
     const PAYLOAD_NEXT = 'next';
     const PAYLOAD_RETRY = 'retry';
+    const PAYLOAD_TASK_ID = 'task_id';
 
     /** @var ReleasedAmqpFactory */
     protected $factory;
@@ -52,10 +53,14 @@ class TaskQueueAmqpEnqueuer implements EnqueuerInterface
      */
     protected function buildPayload(BaseTask $task): array
     {
-        $payload = [
-            self::PAYLOAD_TYPE => $task->getType(),
-            self::PAYLOAD_DATA => $task->getData(),
-        ];
+        $payload = [];
+
+        if (!is_null($task->getEntity())) {
+            $payload[self::PAYLOAD_TASK_ID] = $task->getEntity()->getId();
+        }
+
+        $payload[self::PAYLOAD_TYPE] = $task->getType();
+        $payload[self::PAYLOAD_DATA] = $task->getData();
 
         if ($task->getRetries() > 0) {
             $payload[self::PAYLOAD_RETRY] = $task->getRetries();
