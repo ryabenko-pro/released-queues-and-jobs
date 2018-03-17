@@ -33,44 +33,18 @@ class TaskQueueAmqpExecutor implements TaskLoggerInterface
     protected $messagesLimit = null;
     protected $memoryLimit = null;
 
-    function __construct(ReleasedAmqpFactory $factory, EnqueuerInterface $enqueuer, ContainerInterface $container, $types, LoggerInterface $logger = null)
-    {
+    function __construct(
+        ReleasedAmqpFactory $factory,
+        EnqueuerInterface $enqueuer,
+        ContainerInterface $container,
+        $types,
+        LoggerInterface $logger = null
+    ) {
         $this->factory = $factory;
         $this->enqueuer = $enqueuer;
         $this->container = $container;
         $this->types = $this->fixTypes($types);
         $this->logger = $logger;
-    }
-
-    /**
-     * @param string[]|null $types
-     * @param string[]|null $noTypes
-     * @param TaskLoggerInterface|null $logger
-     */
-    public function runTasks($types = null, $noTypes = null, TaskLoggerInterface $logger = null)
-    {
-        /** @var ConfigQueuedTaskType[] $selectedTypes */
-        $selectedTypes = array_filter($this->types, function (ConfigQueuedTaskType $type) use ($types, $noTypes) {
-            $matches = empty($types) || false !== array_search($type->getName(), (array)$types);
-            $blocks = !empty($noTypes) && false !== array_search($type->getName(), (array)$noTypes);
-
-            return $matches && !$blocks;
-        });
-
-        $selectedTypes = array_values($selectedTypes);
-
-        $consumer = $this->factory->getConsumer($selectedTypes);
-
-        if (!is_null($this->memoryLimit)) {
-            $consumer->setMemoryLimit($this->memoryLimit);
-        }
-
-        $consumer->setCallback(function (AMQPMessage $message) use ($logger) {
-            // Check for stop file and nack
-            $this->processMessage($message, $logger);
-        });
-
-        $consumer->start($this->messagesLimit);
     }
 
     /**

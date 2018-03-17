@@ -36,7 +36,7 @@ abstract class BaseTask
         $this->validateData($data);
 
         $this->data = $data;
-        $this->entity = $entity;
+        $this->setEntity($entity);
         $this->scheduledAt = $scheduledAt;
     }
 
@@ -151,9 +151,12 @@ abstract class BaseTask
      * @param QueuedTask $entity
      * @return self
      */
-    public function setEntity($entity)
+    public function setEntity(QueuedTask $entity = null)
     {
         $this->entity = $entity;
+
+        $this->retries = is_null($entity) ? 0 : $entity->getTries();
+
         return $this;
     }
 

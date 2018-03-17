@@ -5,10 +5,12 @@ namespace Released\QueueBundle\Tests\Service\Amqp;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Released\QueueBundle\DependencyInjection\Util\ConfigQueuedTaskType;
+use Released\QueueBundle\Entity\QueuedTask;
 use Released\QueueBundle\Service\Amqp\MessageUtil;
 use Released\QueueBundle\Service\Amqp\ReleasedAmqpFactory;
 use Released\QueueBundle\Service\Amqp\TaskQueueAmqpEnqueuer;
 use Released\QueueBundle\Tests\Stub\StubProducer;
+use Released\QueueBundle\Tests\StubQueuedTask;
 use Released\QueueBundle\Tests\StubTask;
 
 class TaskQueueAmqpEnqueuerTest extends TestCase
@@ -46,6 +48,21 @@ class TaskQueueAmqpEnqueuerTest extends TestCase
 
         // WHEN
         $task = new StubTask(['some' => 'data']);
+        $this->service->enqueue($task);
+    }
+
+    public function testShouldPublishMessageWithEntity()
+    {
+        // EXPECTS
+        $this->factory->expects($this->once())->method('getProducer')
+            ->with($this->type)->willReturn($this->producer);
+
+        $this->producer->expects($this->once())->method('publish')
+            ->with(MessageUtil::serialize(['task_id' => 123, 'type' => 'stub', 'data' => ['some' => 'data']]));
+
+        // WHEN
+        $entity = new StubQueuedTask(123);
+        $task = new StubTask(['some' => 'data'], $entity);
         $this->service->enqueue($task);
     }
 
@@ -98,5 +115,27 @@ class TaskQueueAmqpEnqueuerTest extends TestCase
 
         // WHEN
         $this->service->retry($task);
+    }
+
+    public function testShouldRetryTaskWithNext()
+    {
+        // GIVEN
+        $task = new StubTask(['some' => 'data']);
+
+        // EXPECTS
+        $this->factory->expects($this->once())->method('getProducer')
+            ->with($this->type)->willReturn($this->producer);
+
+        $this->producer->expects($this->once())->method('publish')
+            ->with(MessageUtil::serialize([
+                'type' => 'stub',
+                'data' => ['some' => 'data'],
+                'retry' => $task->getRetries() + 1,
+            ]));
+
+        // WHEN
+        $this->service->retry($task);
+
+        $this->assertFalse("Must be implemented");
     }
 }

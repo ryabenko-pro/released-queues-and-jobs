@@ -4,6 +4,8 @@
 namespace Released\QueueBundle\Tests\Service;
 
 
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 use Released\QueueBundle\DependencyInjection\Util\ConfigQueuedTaskType;
 use Released\QueueBundle\Entity\QueuedTask;
 use Released\QueueBundle\Exception\TaskExecutionException;
@@ -16,7 +18,7 @@ use Released\QueueBundle\Tests\StubTask;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
-class TaskQueueServiceTest extends \PHPUnit_Framework_TestCase
+class TaskQueueServiceTest extends TestCase
 {
 
     /**
@@ -29,10 +31,7 @@ class TaskQueueServiceTest extends \PHPUnit_Framework_TestCase
         $task = new StubTask(['some data']);
 
         $container = new Container();
-        /** @var QueuedTaskRepository|\PHPUnit_Framework_MockObject_MockObject $repository */
-        $repository = $this->getMockBuilder('Released\QueueBundle\Entity\QueuedTaskRepository')
-            ->setMethods(['saveQueueTask', 'getQueuedTask', 'getQueuedTasksForRun', 'updateDependTasks'])
-            ->disableOriginalConstructor()->getMock();
+        $repository = $this->getQueuedTypesRepositoryMock();
 
         $service = new TaskQueueDbService($container, $repository, []);
 
@@ -346,14 +345,11 @@ class TaskQueueServiceTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @return \PHPUnit_Framework_MockObject_MockObject|QueuedTaskRepository
+     * @return QueuedTaskRepository|MockObject
      */
     private function getQueuedTypesRepositoryMock()
     {
-        $repository = $this->getMockBuilder('Released\QueueBundle\Entity\QueuedTaskRepository')
-            ->setMethods(['saveQueuedTask', 'setTaskStarted', 'setTaskFinished', 'getQueuedTasksForRun', 'updateDependTasks'])
-            ->disableOriginalConstructor()->getMock();
-        return $repository;
+        return $this->getMockBuilder(QueuedTaskRepository::class)->disableOriginalConstructor()->getMock();
     }
 
     /**

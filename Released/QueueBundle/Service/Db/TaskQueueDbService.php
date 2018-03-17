@@ -108,6 +108,21 @@ class TaskQueueDbService implements EnqueuerInterface, TaskLoggerInterface
     }
 
     /**
+     * @param int $id
+     * @param TaskLoggerInterface|null $logger
+     * @throws \RuntimeException
+     */
+    public function runTaskById($id, TaskLoggerInterface $logger = null)
+    {
+        /** @var QueuedTask $entity */
+        $entity = $this->queuedTaskRepository->find($id);
+
+        $task = $this->mapEntityToTask($entity);
+
+        $this->executeTask($task, $logger);
+    }
+
+    /**
      * Execute task. Usually from background cron command.
      * @param BaseTask $task
      * @param TaskLoggerInterface|null $logger
@@ -207,10 +222,10 @@ class TaskQueueDbService implements EnqueuerInterface, TaskLoggerInterface
 
     /**
      * @param QueuedTask $entity
-     * @throws \Exception
+     * @throws \RuntimeException
      * @return BaseTask
      */
-    public function mapEntityToTask($entity)
+    public function mapEntityToTask(QueuedTask $entity)
     {
         $type = $this->getType($entity->getType());
 
