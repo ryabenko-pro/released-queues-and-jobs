@@ -57,19 +57,11 @@ class TaskQueueAmqpExecutor implements TaskLoggerInterface
     {
         $payload = MessageUtil::unserialize($message->getBody());
 
-        $type = $this->types[$payload[TaskQueueAmqpEnqueuer::PAYLOAD_TYPE]];
 
         $logger = is_null($logger) ? $this : new TaskLoggerAggregate([$this, $logger]);
 
         // Create task
-        $class = $type->getClassName();
-        if (!is_subclass_of($class, BaseTask::class)) {
-            throw new TaskAddException("Task class '{$class}' must be subclass of " . BaseTask::class);
-        }
-
-        /** @var BaseTask $task */
-        $task = new $class($payload[TaskQueueAmqpEnqueuer::PAYLOAD_DATA] ?? []);
-        $task->setRetries($payload[TaskQueueAmqpEnqueuer::PAYLOAD_RETRY] ?? 0);
+        $task = $this->createTaskInstance($payload);
 
         // Execute task and nack if false
         try {
@@ -174,5 +166,30 @@ class TaskQueueAmqpExecutor implements TaskLoggerInterface
         if ($force || $task->getRetries() <= $type->getRetryLimit()) {
             $this->enqueuer->retry($task);
         }
+    }
+
+    /**
+     * @param $payload
+     * @return BaseTask
+     */
+    protected function createTaskInstance($payload): BaseTask
+    {
+        $type = $this->types[$payload[TaskQueueAmqpEnqueuer::PAYLOAD_TYPE]];
+        $class = $type->getClassName();
+        if (!is_subclass_of($class, BaseTask::class)) {
+            throw new TaskAddException("Task class '{$class}' must be subclass of " . BaseTask::class);
+        }
+
+        /** @var BaseTask $task */
+        $task = new $class($payload[TaskQueueAmqpEnqueuer::PAYLOAD_DATA] ?? []);
+        $task->setRetries($payload[TaskQueueAmqpEnqueuer::PAYLOAD_RETRY] ?? 0);
+
+        if (isset($payload[TaskQueueAmqpEnqueuer::PAYLOAD_NEXT])) {
+            foreach ((array)$payload[TaskQueueAmqpEnqueuer::PAYLOAD_NEXT] as $next) {
+                $task->addNextTask($this->createTaskInstance($next));
+            }
+        }
+
+        return $task;
     }
 }
