@@ -4,6 +4,7 @@ namespace Released\QueueBundle\Service\Amqp;
 
 use PhpAmqpLib\Message\AMQPMessage;
 use Released\QueueBundle\DependencyInjection\Util\ConfigQueuedTaskType;
+use Released\QueueBundle\Exception\TaskExecutionException;
 use Released\QueueBundle\Service\Db\TaskQueueDbService;
 use Released\QueueBundle\Service\TaskLoggerInterface;
 
@@ -68,9 +69,13 @@ class TaskQueueAmqpConsumer
     public function processMessage(AMQPMessage $message, TaskLoggerInterface $logger = null)
     {
         $payload = MessageUtil::unserialize($message->getBody());
+        if (is_null($payload)) {
+            // Deserialization failed
+            throw new TaskExecutionException("Deserialization of body failed: " . $message->getBody());
+        }
 
-        if (isset($payload['task_id'])) {
-            $this->dbService->runTaskById($payload['task_id']);
+        if (isset($payload[TaskQueueAmqpEnqueuer::PAYLOAD_TASK_ID])) {
+            $this->dbService->runTaskById($payload[TaskQueueAmqpEnqueuer::PAYLOAD_TASK_ID]);
         } else {
             $this->executor->processMessage($message, $logger);
         }

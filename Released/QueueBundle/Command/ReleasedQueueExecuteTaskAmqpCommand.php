@@ -5,7 +5,6 @@ namespace Released\QueueBundle\Command;
 use Released\QueueBundle\Service\Logger\TaskLoggerConsole;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Question\Question;
 
 class ReleasedQueueExecuteTaskAmqpCommand extends BaseReleasedQueueExecuteTaskCommand
 {
@@ -31,7 +30,7 @@ class ReleasedQueueExecuteTaskAmqpCommand extends BaseReleasedQueueExecuteTaskCo
         $verbose = $input->getOption('verbose');
         $logger = $verbose ? new TaskLoggerConsole($output) : null;
 
-        $service = $this->getContainer()->get('released.queue.task_queue.service_amqp_executor');
+        $service = $this->getContainer()->get('released.queue.task_queue.service_amqp_consumer');
 
         $types = $input->getOption('type');
         $noTypes = $input->getOption('no-type');

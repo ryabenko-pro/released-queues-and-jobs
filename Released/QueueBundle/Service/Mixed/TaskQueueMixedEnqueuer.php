@@ -26,8 +26,10 @@ class TaskQueueMixedEnqueuer implements EnqueuerInterface
     /** {@inheritdoc} */
     public function enqueue(BaseTask $task)
     {
-        $this->dbEnqueuer->enqueue($task);
+        $id = $this->dbEnqueuer->enqueue($task);
         $this->amqpEnqueuer->enqueue($task);
+
+        return $id;
     }
 
     /** {@inheritdoc} */
