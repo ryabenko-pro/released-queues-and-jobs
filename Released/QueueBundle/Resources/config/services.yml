@@ -12,6 +12,7 @@ services:
             - "@=service(parameter('released.queue.entity_manager'))"
 
     released.queue.repository.queued_task:
+        public: true
         class: Released\QueueBundle\Repository\QueuedTaskRepository
         factory: ['@released.queue_repository_factory', getRepository]
         arguments:
@@ -45,6 +46,10 @@ services:
         public: true
         arguments:
                 - null # to be replaced in QueueServicePass compiler pass
+
+    Released\QueueBundle\Service\TaskQueueService:
+        alias: released.queue.task_queue.service
+        public: true
 
     released.queue.released_amqp_factory:
         class: Released\QueueBundle\Service\Amqp\ReleasedAmqpFactory

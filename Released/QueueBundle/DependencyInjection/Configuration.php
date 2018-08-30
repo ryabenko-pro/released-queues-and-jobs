@@ -23,7 +23,7 @@ class Configuration implements ConfigurationInterface
 
         $rootNode->children()
             ->scalarNode("template")->defaultValue("ReleasedQueueBundle::base.html.twig")->end()
-            ->scalarNode("server_id")->end()
+            ->scalarNode("server_id")->defaultNull()->end()
             ->scalarNode("transport")->defaultValue("db")->end()
             ->scalarNode("em")->defaultValue("doctrine.orm.default_entity_manager")->end()
             ->arrayNode('amqp')->addDefaultsIfNotSet()
