@@ -1,63 +1,66 @@
 services:
-  released.jobs_repository_factory:
-    public: false
-    class: Released\Common\Factory\RepositoryFactory
-    arguments:
-      - "@=service(parameter('released_jobs.entity_manager'))"
+    _defaults:
+        public: true
 
-  released.repository.job:
-    class: Released\JobsBundle\Repository\JobRepository
-    factory: ['@released.jobs_repository_factory', getRepository]
-    arguments:
-      - Released\JobsBundle\Entity\Job
+    released.jobs_repository_factory:
+        public: false
+        class: Released\Common\Factory\RepositoryFactory
+        arguments:
+        - "@=service(parameter('released_jobs.entity_manager'))"
 
-  released.repository.job_type:
-    class: Released\JobsBundle\Repository\JobTypeRepository
-    factory: ['@released.jobs_repository_factory', getRepository]
-    arguments:
-      - Released\JobsBundle\Entity\JobType
+    released.repository.job:
+        class: Released\JobsBundle\Repository\JobRepository
+        factory: ['@released.jobs_repository_factory', getRepository]
+        arguments:
+        - Released\JobsBundle\Entity\Job
 
-  released.repository.job_package:
-    class: Released\JobsBundle\Repository\JobPackageRepository
-    factory: ['@released.jobs_repository_factory', getRepository]
-    arguments:
-      - Released\JobsBundle\Entity\JobPackage
+    released.repository.job_type:
+        class: Released\JobsBundle\Repository\JobTypeRepository
+        factory: ['@released.jobs_repository_factory', getRepository]
+        arguments:
+        - Released\JobsBundle\Entity\JobType
 
-  released.repository.job_event:
-    class: Released\JobsBundle\Repository\JobEventRepository
-    factory: ['@released.jobs_repository_factory', getRepository]
-    arguments:
-      - Released\JobsBundle\Entity\JobEvent
+    released.repository.job_package:
+        class: Released\JobsBundle\Repository\JobPackageRepository
+        factory: ['@released.jobs_repository_factory', getRepository]
+        arguments:
+        - Released\JobsBundle\Entity\JobPackage
 
-  released.jobs.doctrine_utils:
-    lazy: true
-    class: Released\Common\Doctrine\DoctrineUtils
-    arguments: ['@doctrine', "@=parameter('released_jobs.entity_manager')", "@logger"]
+    released.repository.job_event:
+        class: Released\JobsBundle\Repository\JobEventRepository
+        factory: ['@released.jobs_repository_factory', getRepository]
+        arguments:
+        - Released\JobsBundle\Entity\JobEvent
 
-  job_persistence.service:
-    class: Released\JobsBundle\Service\Persistence\JobPersistenceService
-    public: false
-    arguments:
-      - "@released.jobs.doctrine_utils"
-      - '%jobs.types%'
+    released.jobs.doctrine_utils:
+        lazy: true
+        class: Released\Common\Doctrine\DoctrineUtils
+        arguments: ['@doctrine', "@=parameter('released_jobs.entity_manager')", "@logger"]
 
-  job_process_persistence.service:
-    class: Released\JobsBundle\Service\Persistence\JobProcessPersistenceService
-    public: false
-    arguments:
-      - "@released.jobs.doctrine_utils"
-      - '%jobs.types%'
+    job_persistence.service:
+        class: Released\JobsBundle\Service\Persistence\JobPersistenceService
+        public: false
+        arguments:
+        - "@released.jobs.doctrine_utils"
+        - '%jobs.types%'
 
-  job_planner.service:
-    class: Released\JobsBundle\Service\JobPlannerService
-    arguments:
-      - '@service_container'
-      - '@job_persistence.service'
-      - '@job_process_persistence.service'
-      - '%jobs.types%'
+    job_process_persistence.service:
+        class: Released\JobsBundle\Service\Persistence\JobProcessPersistenceService
+        public: false
+        arguments:
+        - "@released.jobs.doctrine_utils"
+        - '%jobs.types%'
 
-  process_executor.service:
-    class: Released\JobsBundle\Service\ProcessExecutorService
-    arguments:
-      - '@job_process_persistence.service'
-      - '@service_container'
+    job_planner.service:
+        class: Released\JobsBundle\Service\JobPlannerService
+        arguments:
+        - '@service_container'
+        - '@job_persistence.service'
+        - '@job_process_persistence.service'
+        - '%jobs.types%'
+
+    process_executor.service:
+        class: Released\JobsBundle\Service\ProcessExecutorService
+        arguments:
+        - '@job_process_persistence.service'
+        - '@service_container'
